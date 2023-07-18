@@ -1,6 +1,7 @@
-[http]
-api_key = "secret-key-goes-here"
+[auth]
+api_key = "secret-goes-here"
 
+[http]
 candlestick_url = "https://chartdata.sfox.com"
 server_url = "https://api.sfox.com"
 
