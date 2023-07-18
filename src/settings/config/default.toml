@@ -1,0 +1,10 @@
+[http]
+
+apiKey = "secret-key-goes-here"
+
+candlestickUrl = "https://chartdata.sfox.com"
+serverUrl = "https://api.sfox.com"
+
+[websocket]
+
+serverUrl = "wss://ws.sfox.com/ws"

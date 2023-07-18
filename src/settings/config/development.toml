@@ -1,0 +1,7 @@
+[http]
+
+serverUrl = "https://api.staging.sfox.com"
+
+[websocket]
+
+serverUrl = "wss://ws.staging.sfox.com/ws"
