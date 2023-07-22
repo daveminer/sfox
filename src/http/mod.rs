@@ -106,8 +106,6 @@ impl Client {
     {
         // Use request to make a request
         let url = format!("{}/v1/{}", self.server_url, resource);
-        println!("URL = {}", url);
-        println!("AUTHTOKEN = {}", self.auth_token);
 
         let response = self
             .http_client
@@ -129,15 +127,6 @@ impl Client {
     {
         let url = format!("{}/v1/{}", self.server_url, resource);
 
-        // let response = self
-        //     .http_client
-        //     .post(url)
-        //     .bearer_auth(self.auth_token)
-        //     // Make optionaly
-        //     .json(req_body)
-        //     .send()
-        //     .map_err(|e| HttpError::TransportError(e.to_string()));
-
         let base_resp = self.http_client.post(url).bearer_auth(self.auth_token);
 
         let response = if req_body.is_empty() {
@@ -149,14 +138,6 @@ impl Client {
         .map_err(|e| HttpError::TransportError(e.to_string()));
 
         response.and_then(|response| async move { parse_response(response).await })
-        // response.and_then(|response| async move {
-        //     if response.status().is_success() {
-        //         Ok(())
-        //     } else {
-        //         let error_text = response.text().await.unwrap_or("no text".to_string());
-        //         Err(HttpError::TransportError(error_text))
-        //     }
-        // })
     }
 }
 
