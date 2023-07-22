@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use futures_util::{Future, FutureExt};
 use serde::Deserialize;
 
@@ -9,12 +11,14 @@ pub struct CryptoDepositAddress {
     pub currency: String,
 }
 
+const CRYPTO_DEPOSIT_ADDRESS_RESOURCE: &str = "user/deposit/address";
+
 impl Client {
     pub fn crypto_deposit_address(
         self,
         currency: &str,
     ) -> impl Future<Output = Result<Option<CryptoDepositAddress>, HttpError>> {
-        self.get_request(&format!("user/deposit/address/{}", currency))
+        self.get_request(&format!("{}/{}", CRYPTO_DEPOSIT_ADDRESS_RESOURCE, currency))
             .then(|res| async move {
                 match res {
                     Ok(f) => Ok(f),
@@ -29,5 +33,15 @@ impl Client {
                     Err(e) => Err(e),
                 }
             })
+    }
+
+    pub fn new_crypto_deposit_address(
+        self,
+        currency: &str,
+    ) -> impl Future<Output = Result<CryptoDepositAddress, HttpError>> {
+        self.post_request(
+            &format!("{}/{}", CRYPTO_DEPOSIT_ADDRESS_RESOURCE, currency),
+            &HashMap::new(),
+        )
     }
 }

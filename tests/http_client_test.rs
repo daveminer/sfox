@@ -32,5 +32,15 @@ async fn test_crypto_deposit_address() {
     let client = Client::new().unwrap();
 
     let response = client.crypto_deposit_address("btc").await;
-    assert!(response.is_ok());
+    println!("{:?}", response.unwrap());
+    //assert!(response.is_ok());
+}
+
+#[tokio::test]
+async fn test_new_crypto_deposit_address() {
+    let client = Client::new().unwrap();
+
+    let response = client.new_crypto_deposit_address("btc").await;
+    println!("{:?}", response.unwrap());
+    //assert!(response.is_ok());
 }

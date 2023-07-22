@@ -116,42 +116,66 @@ impl Client {
             .send()
             .map_err(|e| HttpError::TransportError(e.to_string()));
 
-        response.and_then(|response| async move {
-            let text = match response.text().await {
-                Ok(text) => text,
-                Err(e) => return Err(HttpError::TransportError(e.to_string())),
-            };
-
-            println!("TEXT = {}", text);
-
-            match serde_json::from_str::<T>(&text) {
-                Ok(payload) => Ok(payload),
-                Err(e) => Err(HttpError::UnparseableResponse(e.to_string(), text)),
-            }
-        })
+        response.and_then(|response| async move { parse_response(response).await })
     }
 
-    fn post_request(
+    fn post_request<T>(
         self,
         resource: &str,
         req_body: &HashMap<String, String>,
-    ) -> impl Future<Output = Result<(), HttpError>> {
+    ) -> impl Future<Output = Result<T, HttpError>>
+    where
+        T: Clone + DeserializeOwned + Send + 'static,
+    {
         let url = format!("{}/v1/{}", self.server_url, resource);
 
-        let response = self
-            .http_client
-            .post(url)
-            .json(req_body)
-            .send()
-            .map_err(|e| HttpError::TransportError(e.to_string()));
+        // let response = self
+        //     .http_client
+        //     .post(url)
+        //     .bearer_auth(self.auth_token)
+        //     // Make optionaly
+        //     .json(req_body)
+        //     .send()
+        //     .map_err(|e| HttpError::TransportError(e.to_string()));
 
-        response.and_then(|response| async move {
-            if response.status().is_success() {
-                Ok(())
-            } else {
-                let error_text = response.text().await.unwrap_or("no text".to_string());
-                Err(HttpError::TransportError(error_text))
-            }
-        })
+        let base_resp = self.http_client.post(url).bearer_auth(self.auth_token);
+
+        let response = if req_body.is_empty() {
+            base_resp
+        } else {
+            base_resp.json(req_body)
+        }
+        .send()
+        .map_err(|e| HttpError::TransportError(e.to_string()));
+
+        response.and_then(|response| async move { parse_response(response).await })
+        // response.and_then(|response| async move {
+        //     if response.status().is_success() {
+        //         Ok(())
+        //     } else {
+        //         let error_text = response.text().await.unwrap_or("no text".to_string());
+        //         Err(HttpError::TransportError(error_text))
+        //     }
+        // })
+    }
+}
+
+async fn parse_response<T>(response: reqwest::Response) -> Result<T, HttpError>
+where
+    T: Clone + DeserializeOwned + Send + 'static,
+{
+    if !response.status().is_success() {
+        let error_text = response.text().await.unwrap_or("no text".to_string());
+        return Err(HttpError::TransportError(error_text));
+    }
+
+    let text = match response.text().await {
+        Ok(text) => text,
+        Err(e) => return Err(HttpError::TransportError(e.to_string())),
+    };
+
+    match serde_json::from_str::<T>(&text) {
+        Ok(payload) => Ok(payload),
+        Err(e) => Err(HttpError::UnparseableResponse(e.to_string(), text)),
     }
 }
