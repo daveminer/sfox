@@ -4,6 +4,7 @@ use std::env;
 
 #[derive(Debug, Deserialize)]
 pub struct Settings {
+    pub auth: AuthSettings,
     pub http: HttpSettings,
     pub websocket: WebsocketSettings,
 }
@@ -15,7 +16,6 @@ pub struct AuthSettings {
 
 #[derive(Debug, Deserialize)]
 pub struct HttpSettings {
-    pub api_key: String,
     pub candlestick_url: String,
     pub server_url: String,
 }
@@ -27,13 +27,16 @@ pub struct WebsocketSettings {
 
 impl Settings {
     pub fn new() -> Result<Self, ConfigError> {
-        let run_mode = env::var("RUN_MODE").unwrap_or_else(|_| "development".into());
+        let staging_env = env::var("SFOX_API_USE_STAGING").unwrap_or_else(|_| "false".to_string());
+        let staging_api_enabled = staging_env == "true";
 
-        let default_config = Config::builder().add_source(File::with_name("config/default"));
+        let default_config =
+            Config::builder().add_source(File::with_name("src/settings/config/default"));
 
         // Load
-        let decorated_config = if abbreviation(run_mode) == "dev" {
-            default_config.add_source(File::with_name("config/development"))
+        let decorated_config = if staging_api_enabled {
+            println!("Loading development configuration.");
+            default_config.add_source(File::with_name("src/settings/config/development"))
         } else {
             default_config
         };
@@ -41,8 +44,4 @@ impl Settings {
         let config = decorated_config.build()?;
         config.try_deserialize()
     }
-}
-
-fn abbreviation(s: String) -> String {
-    s.chars().take(3).collect::<String>().to_lowercase()
 }
