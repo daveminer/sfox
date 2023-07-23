@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use futures_util::{Future, FutureExt};
+use futures_util::Future;
 use serde::Deserialize;
 
 use super::super::{Client, HttpError};

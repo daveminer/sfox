@@ -9,47 +9,6 @@ use crate::settings::Settings;
 
 pub mod resources;
 
-// #[derive(Clone, Deserialize)]
-// pub enum ApiResponse<T> {
-//     Single(T),
-//     Multiple(Vec<T>),
-// }
-// trait IntoVec {}
-// trait IntoSingle {}
-
-// impl<T> IntoVec for ApiResponse<T> {}
-// impl<T> IntoSingle for ApiResponse<T> {}
-
-// impl<T: IntoVec> Into<Vec<T>> for ApiResponse<T> {
-//     // Vec<T> impl
-// }
-
-// impl<T: IntoSingle> Into<T> for ApiResponse<T> {
-//     // T impl
-// }
-
-// impl<T> ApiResponse<T> {
-//     pub fn into_vec(self) -> Vec<T> {
-//         // existing implementation to return Vec<T>
-//     }
-
-//     pub fn into_single(self) -> T {
-//         // existing implementation to return T
-//     }
-// }
-
-// impl<T> Into<Vec<T>> for ApiResponse<T> {
-//     fn into(self) -> Vec<T> {
-//         self.into_vec()
-//     }
-// }
-
-// impl<T> Into<T> for ApiResponse<T> {
-//     fn into(self) -> T {
-//         self.into_single()
-//     }
-// }
-
 #[derive(Clone, Error, Debug, Deserialize)]
 pub enum HttpError {
     #[error("could not create http client: {0}")]
@@ -87,19 +46,21 @@ impl Client {
         })
     }
 
-    // pub fn get_currencies(self) -> ResponseFuture {
-    //     self.get_request("currency")
-    // }
+    fn delete_request<T>(self, resource: &str) -> impl Future<Output = Result<T, HttpError>>
+    where
+        T: Clone + DeserializeOwned + Send + 'static,
+    {
+        let url = format!("{}/v1/{}", self.server_url, resource);
 
-    // pub fn get_fees(self) -> ResponseFuture {
-    //     self.get_request("markets/currency-pairs")
-    // }
+        let response = self
+            .http_client
+            .delete(url)
+            .bearer_auth(self.auth_token)
+            .send()
+            .map_err(|e| HttpError::TransportError(e.to_string()));
 
-    // pub fn withdrawal_fee(self, currency: &str) -> ResponseFuture {
-    //     self.get_request(&format!("withdraw-fee/{}", currency))
-    // }
-
-    // Modify this function so it can return a struct or an array of structs
+        response.and_then(|response| async move { parse_response(response).await })
+    }
     fn get_request<T>(self, resource: &str) -> impl Future<Output = Result<T, HttpError>>
     where
         T: Clone + DeserializeOwned + Send + 'static,
