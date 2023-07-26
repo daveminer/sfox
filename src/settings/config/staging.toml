@@ -1,0 +1,6 @@
+# Contact SFox support for access to the staging environments below.
+[http]
+server_url = "https://api.staging.sfox.com"
+
+[websocket]
+server_url = "wss://ws.staging.sfox.com/ws"
