@@ -83,7 +83,6 @@ async fn test_currency_pairs() {
 
     let response = client.currency_pairs().await;
     assert!(response.is_ok());
-    println!("RESP: {:?}", response.unwrap())
 }
 
 // Untested

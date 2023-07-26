@@ -5,7 +5,7 @@ use serde::de::Unexpected;
 use serde::Deserialize;
 use serde::Deserializer;
 
-use super::super::{Client, HttpError};
+use super::super::{Client, HttpError, HttpVerb};
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Currency {
@@ -58,12 +58,12 @@ where
 
 impl Client {
     pub fn currencies(self) -> impl Future<Output = Result<Vec<Currency>, HttpError>> {
-        self.get_request("currency")
+        self.request(HttpVerb::Get, "currency", None)
     }
 
     pub fn currency_pairs(
         self,
     ) -> impl Future<Output = Result<HashMap<String, CurrencyPair>, HttpError>> {
-        self.get_request("markets/currency-pairs")
+        self.request(HttpVerb::Get, "markets/currency-pairs", None)
     }
 }

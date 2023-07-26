@@ -1,9 +1,7 @@
 use futures_util::Future;
 use serde::Deserialize;
 
-//use crate::http::ApiResponse;
-
-use super::super::{Client, HttpError};
+use super::super::{Client, HttpError, HttpVerb};
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct AccountBalance {
@@ -19,7 +17,7 @@ pub struct AccountBalance {
 
 impl Client {
     pub fn account_balance(self) -> impl Future<Output = Result<Vec<AccountBalance>, HttpError>> {
-        self.get_request::<Vec<AccountBalance>>("user/balance")
+        self.request::<Vec<AccountBalance>>(HttpVerb::Get, "user/balance", None)
     }
 }
 

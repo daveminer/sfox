@@ -1,7 +1,7 @@
 use futures_util::Future;
 use serde::Deserialize;
 
-use super::super::{Client, HttpError};
+use super::super::{Client, HttpError, HttpVerb};
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct TransactionHistory {
@@ -45,6 +45,6 @@ impl Client {
     pub fn transaction_history(
         self,
     ) -> impl Future<Output = Result<Vec<TransactionHistory>, HttpError>> {
-        self.get_request("account/transactions")
+        self.request(HttpVerb::Get, "account/transactions", None)
     }
 }

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use futures_util::Future;
 use serde::Deserialize;
 
-use super::super::{Client, HttpError};
+use super::super::{Client, HttpError, HttpVerb};
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct CryptoDepositAddress {
@@ -18,16 +18,21 @@ impl Client {
         self,
         currency: &str,
     ) -> impl Future<Output = Result<HashMap<String, Vec<CryptoDepositAddress>>, HttpError>> {
-        self.get_request(&format!("{}/{}", CRYPTO_DEPOSIT_ADDRESS_RESOURCE, currency))
+        self.request(
+            HttpVerb::Get,
+            &format!("{}/{}", CRYPTO_DEPOSIT_ADDRESS_RESOURCE, currency),
+            None,
+        )
     }
 
     pub fn new_crypto_deposit_address(
         self,
         currency: &str,
     ) -> impl Future<Output = Result<CryptoDepositAddress, HttpError>> {
-        self.post_request(
+        self.request(
+            HttpVerb::Post,
             &format!("{}/{}", CRYPTO_DEPOSIT_ADDRESS_RESOURCE, currency),
-            &HashMap::new(),
+            Some(&HashMap::new()),
         )
     }
 }

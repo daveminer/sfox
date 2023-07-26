@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use futures_util::Future;
 use serde::Deserialize;
 
-use super::super::{Client, HttpError};
+use super::super::{Client, HttpError, HttpVerb};
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Withdrawal {
@@ -28,6 +28,6 @@ impl Client {
         params.insert("currency".to_string(), currency.to_string());
         params.insert("isWire".to_string(), is_wire.to_string());
 
-        self.post_request("/user/withdraw", &params)
+        self.request(HttpVerb::Post, "/user/withdraw", Some(&params))
     }
 }

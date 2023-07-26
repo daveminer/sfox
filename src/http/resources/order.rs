@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use futures_util::Future;
 use serde::Deserialize;
 
-use super::super::{Client, HttpError};
+use super::super::{Client, HttpError, HttpVerb};
 
 #[derive(Clone, Debug, Deserialize)]
 pub enum CancellationStatus {
@@ -25,14 +25,14 @@ pub struct CryptoDepositAddress {
 
 impl Client {
     pub fn cancel_all_orders(self) -> impl Future<Output = Result<Vec<CancelledOrder>, HttpError>> {
-        self.delete_request("orders/open")
+        self.request(HttpVerb::Delete, "orders/open", None)
     }
 
     pub fn cancel_order(
         self,
         order_id: usize,
     ) -> impl Future<Output = Result<CancelledOrder, HttpError>> {
-        self.delete_request(&format!("orders/{}", order_id))
+        self.request(HttpVerb::Delete, &format!("orders/{}", order_id), None)
     }
 
     pub fn cancel_orders(
@@ -46,7 +46,11 @@ impl Client {
             .collect::<Vec<String>>()
             .join(",");
 
-        self.delete_request(&format!("orders?ids={}", order_ids_query_param))
+        self.request(
+            HttpVerb::Delete,
+            &format!("orders?ids={}", order_ids_query_param),
+            None,
+        )
     }
 
     pub fn place_order(
@@ -69,6 +73,6 @@ impl Client {
             params.insert("client_order_id".to_string(), client_order_id.to_string());
         }
 
-        self.post_request(&format!("orders/{}", side), &params)
+        self.request(HttpVerb::Post, &format!("orders/{}", side), Some(&params))
     }
 }
