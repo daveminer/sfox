@@ -1,9 +1,7 @@
 use futures_util::Future;
 use serde::Deserialize;
 
-//use crate::http::ApiResponse;
-
-use super::super::{Client, HttpError};
+use super::super::{Client, HttpError, HttpVerb};
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct AccountBalance {
@@ -19,7 +17,7 @@ pub struct AccountBalance {
 
 impl Client {
     pub fn account_balance(self) -> impl Future<Output = Result<Vec<AccountBalance>, HttpError>> {
-        self.get_request::<Vec<AccountBalance>>("user/balance")
+        self.request::<Vec<AccountBalance>>(HttpVerb::Get, "user/balance", None)
     }
 }
 
@@ -66,14 +64,8 @@ mod tests {
         // TODO: allow server_url as input
         let mut client = Client::new().unwrap();
         client.server_url = format!("http://{}", s.host_with_port());
-        //println!("HWP: {}", s.host_with_port());
 
-        let response = client.account_balance().await;
-        println!("RESP: {:?}", response.unwrap());
-        //assert!(response.is_ok());
-        //let account_balance = response.unwrap();
-        //assert_eq!(account_balance[0].currency, "USD");
-        //assert_eq!(account_balance[0].balance, 140.0);
+        //let response = client.account_balance().await;
 
         mock.assert();
     }

@@ -1,7 +1,7 @@
 use futures_util::Future;
 use serde::Deserialize;
 
-use super::super::{Client, HttpError};
+use super::super::{Client, HttpError, HttpVerb};
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Fees {
@@ -21,13 +21,13 @@ pub struct WithdrawFee {
 
 impl Client {
     pub fn fees(self) -> impl Future<Output = Result<Fees, HttpError>> {
-        self.get_request("account/fee-rates")
+        self.request(HttpVerb::Get, "account/fee-rates", None)
     }
 
     pub fn withdraw_fee(
         self,
         currency: &str,
     ) -> impl Future<Output = Result<WithdrawFee, HttpError>> {
-        self.get_request(&format!("withdraw-fee/{}", currency))
+        self.request(HttpVerb::Get, &format!("withdraw-fee/{}", currency), None)
     }
 }

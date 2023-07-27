@@ -9,51 +9,12 @@ use crate::settings::Settings;
 
 pub mod resources;
 
-// #[derive(Clone, Deserialize)]
-// pub enum ApiResponse<T> {
-//     Single(T),
-//     Multiple(Vec<T>),
-// }
-// trait IntoVec {}
-// trait IntoSingle {}
-
-// impl<T> IntoVec for ApiResponse<T> {}
-// impl<T> IntoSingle for ApiResponse<T> {}
-
-// impl<T: IntoVec> Into<Vec<T>> for ApiResponse<T> {
-//     // Vec<T> impl
-// }
-
-// impl<T: IntoSingle> Into<T> for ApiResponse<T> {
-//     // T impl
-// }
-
-// impl<T> ApiResponse<T> {
-//     pub fn into_vec(self) -> Vec<T> {
-//         // existing implementation to return Vec<T>
-//     }
-
-//     pub fn into_single(self) -> T {
-//         // existing implementation to return T
-//     }
-// }
-
-// impl<T> Into<Vec<T>> for ApiResponse<T> {
-//     fn into(self) -> Vec<T> {
-//         self.into_vec()
-//     }
-// }
-
-// impl<T> Into<T> for ApiResponse<T> {
-//     fn into(self) -> T {
-//         self.into_single()
-//     }
-// }
-
 #[derive(Clone, Error, Debug, Deserialize)]
 pub enum HttpError {
     #[error("could not create http client: {0}")]
     InitializationError(String),
+    #[error("invalid request: {0}")]
+    InvalidRequest(String),
     #[error("error while making http request: {0}")]
     TransportError(String),
     #[error("could not deserialize response. Error: {0}, Response: {1}")]
@@ -67,6 +28,14 @@ pub struct Client {
     #[serde(skip)]
     pub http_client: reqwest::Client,
     pub server_url: String,
+}
+
+#[derive(Clone)]
+pub enum HttpVerb {
+    Get,
+    Post,
+    Patch,
+    Delete,
 }
 
 impl Client {
@@ -87,57 +56,49 @@ impl Client {
         })
     }
 
-    // pub fn get_currencies(self) -> ResponseFuture {
-    //     self.get_request("currency")
-    // }
-
-    // pub fn get_fees(self) -> ResponseFuture {
-    //     self.get_request("markets/currency-pairs")
-    // }
-
-    // pub fn withdrawal_fee(self, currency: &str) -> ResponseFuture {
-    //     self.get_request(&format!("withdraw-fee/{}", currency))
-    // }
-
-    // Modify this function so it can return a struct or an array of structs
-    fn get_request<T>(self, resource: &str) -> impl Future<Output = Result<T, HttpError>>
-    where
-        T: Clone + DeserializeOwned + Send + 'static,
-    {
-        // Use request to make a request
-        let url = format!("{}/v1/{}", self.server_url, resource);
-
-        let response = self
-            .http_client
-            .get(url)
-            .bearer_auth(self.auth_token)
-            .send()
-            .map_err(|e| HttpError::TransportError(e.to_string()));
-
-        response.and_then(|response| async move { parse_response(response).await })
-    }
-
-    fn post_request<T>(
+    fn request<T>(
         self,
+        verb: HttpVerb,
         resource: &str,
-        req_body: &HashMap<String, String>,
+        req_body: Option<&HashMap<String, String>>,
     ) -> impl Future<Output = Result<T, HttpError>>
     where
         T: Clone + DeserializeOwned + Send + 'static,
     {
-        let url = format!("{}/v1/{}", self.server_url, resource);
+        let base_response = self
+            .action(verb.clone(), &self.resource_path(resource))
+            .bearer_auth(self.auth_token);
 
-        let base_resp = self.http_client.post(url).bearer_auth(self.auth_token);
-
-        let response = if req_body.is_empty() {
-            base_resp
+        let response = if Self::has_request_body(verb, &req_body) {
+            base_response.json(req_body.unwrap())
         } else {
-            base_resp.json(req_body)
+            base_response
         }
         .send()
         .map_err(|e| HttpError::TransportError(e.to_string()));
 
         response.and_then(|response| async move { parse_response(response).await })
+    }
+
+    fn action(&self, verb: HttpVerb, resource_path: &str) -> reqwest::RequestBuilder {
+        let c = &self.http_client;
+        match verb {
+            HttpVerb::Get => c.get(resource_path),
+            HttpVerb::Post => c.post(resource_path),
+            HttpVerb::Patch => c.patch(resource_path),
+            HttpVerb::Delete => c.delete(resource_path),
+        }
+    }
+
+    fn has_request_body(verb: HttpVerb, req_body: &Option<&HashMap<String, String>>) -> bool {
+        match verb {
+            HttpVerb::Get | HttpVerb::Delete => false,
+            HttpVerb::Post | HttpVerb::Patch => req_body.is_some(),
+        }
+    }
+
+    fn resource_path(&self, resource: &str) -> String {
+        format!("{}/v1/{}", self.server_url, resource)
     }
 }
 

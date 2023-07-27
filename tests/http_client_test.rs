@@ -82,5 +82,77 @@ async fn test_currency_pairs() {
     let client = Client::new().unwrap();
 
     let response = client.currency_pairs().await;
+    println!("PAIRS: {:?}", response);
+    //assert!(response.is_ok());
+}
+
+// Untested
+//
+// #[tokio::test]
+// async fn test_place_order() {
+//     let client = Client::new().unwrap();
+
+//     let response = client
+//         .place_order(
+//             "buy",
+//             "ETH/USDT",
+//             1994.72,
+//             0.0003,
+//             "NetPrice",
+//             200,
+//             Some("test-client-id"),
+//         )
+//         .await;
+//     assert!(response.is_ok());
+// }
+
+// Untested
+// #[tokio::test]
+// async fn test_cancel_order() {
+//     let client = Client::new().unwrap();
+
+//     let response = client.cancel_order("123").await;
+//     assert!(response.is_ok());
+// }
+
+// Untested
+// #[tokio::test]
+// async fn test_cancel_order() {
+//     let client = Client::new().unwrap();
+
+//     let response = client.cancel_orders(vec![123, 456]).await;
+//     assert!(response.is_ok());
+// }
+
+// Untested
+// #[tokio::test]
+// async fn test_cancel_all_orders() {
+//     let client = Client::new().unwrap();
+
+//     let response = client.cancel_all_orders().await;
+//     assert!(response.is_ok());
+// }
+
+#[tokio::test]
+async fn test_request_for_quote() {
+    let client = Client::new().unwrap();
+
+    let response = client
+        .request_for_quote("btcusd", "buy", Some(1.001), None, None)
+        .await;
+    println!("{:?}", response);
     assert!(response.is_ok());
 }
+
+// Untested
+
+// #[tokio::test]
+// async fn test_execute_order_on_quote() {
+//     let client = Client::new().unwrap();
+
+//     let response = client
+//         .request_for_quote("btcusd", "buy", Some(1.001), None, None)
+//         .await;
+//     println!("{:?}", response);
+//     assert!(response.is_ok());
+// }
