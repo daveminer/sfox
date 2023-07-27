@@ -1,11 +1,9 @@
+use futures_util::Future;
+use serde::Deserialize;
 use std::collections::HashMap;
 
-use futures_util::Future;
-use serde::de::Unexpected;
-use serde::Deserialize;
-use serde::Deserializer;
-
 use super::super::{Client, HttpError, HttpVerb};
+use super::bool_from_int;
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Currency {
@@ -40,20 +38,6 @@ pub struct CurrencyPair {
     pub symbol: String,
     pub base: String,
     pub quote: String,
-}
-
-fn bool_from_int<'de, D>(deserializer: D) -> Result<bool, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    match u8::deserialize(deserializer)? {
-        0 => Ok(false),
-        1 => Ok(true),
-        other => Err(serde::de::Error::invalid_value(
-            Unexpected::Unsigned(other as u64),
-            &"zero or one",
-        )),
-    }
 }
 
 impl Client {

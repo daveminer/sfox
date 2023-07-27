@@ -1,6 +1,5 @@
-use std::collections::HashMap;
-
 use futures_util::Future;
+use std::collections::HashMap;
 
 use super::super::{Client, HttpError, HttpVerb};
 

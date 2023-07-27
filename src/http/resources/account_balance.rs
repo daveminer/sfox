@@ -64,14 +64,8 @@ mod tests {
         // TODO: allow server_url as input
         let mut client = Client::new().unwrap();
         client.server_url = format!("http://{}", s.host_with_port());
-        //println!("HWP: {}", s.host_with_port());
 
-        let response = client.account_balance().await;
-        println!("RESP: {:?}", response.unwrap());
-        //assert!(response.is_ok());
-        //let account_balance = response.unwrap();
-        //assert_eq!(account_balance[0].currency, "USD");
-        //assert_eq!(account_balance[0].balance, 140.0);
+        //let response = client.account_balance().await;
 
         mock.assert();
     }

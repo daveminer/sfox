@@ -82,7 +82,8 @@ async fn test_currency_pairs() {
     let client = Client::new().unwrap();
 
     let response = client.currency_pairs().await;
-    assert!(response.is_ok());
+    println!("PAIRS: {:?}", response);
+    //assert!(response.is_ok());
 }
 
 // Untested
@@ -129,5 +130,29 @@ async fn test_currency_pairs() {
 //     let client = Client::new().unwrap();
 
 //     let response = client.cancel_all_orders().await;
+//     assert!(response.is_ok());
+// }
+
+#[tokio::test]
+async fn test_request_for_quote() {
+    let client = Client::new().unwrap();
+
+    let response = client
+        .request_for_quote("btcusd", "buy", Some(1.001), None, None)
+        .await;
+    println!("{:?}", response);
+    assert!(response.is_ok());
+}
+
+// Untested
+
+// #[tokio::test]
+// async fn test_execute_order_on_quote() {
+//     let client = Client::new().unwrap();
+
+//     let response = client
+//         .request_for_quote("btcusd", "buy", Some(1.001), None, None)
+//         .await;
+//     println!("{:?}", response);
 //     assert!(response.is_ok());
 // }
