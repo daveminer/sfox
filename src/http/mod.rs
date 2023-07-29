@@ -1,13 +1,13 @@
 use std::collections::HashMap;
+use std::env;
 
 use futures_util::{Future, TryFutureExt};
 use serde::de::DeserializeOwned;
 use serde_derive::Deserialize;
 use thiserror::Error;
 
-use crate::settings::Settings;
-
-pub mod resources;
+pub mod chart;
+pub mod v1;
 
 #[derive(Clone, Error, Debug, Deserialize)]
 pub enum HttpError {
@@ -22,7 +22,7 @@ pub enum HttpError {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct Client {
+pub struct SFox {
     #[serde(skip)]
     pub auth_token: String,
     #[serde(skip)]
@@ -38,18 +38,26 @@ pub enum HttpVerb {
     Delete,
 }
 
-impl Client {
-    pub fn new() -> Result<Client, HttpError> {
-        let settings = Settings::new().unwrap();
+pub const DEFAULT_SERVER_URL: &str = "https://api.sfox.com";
 
+impl SFox {
+    pub fn new(server_url: Option<&str>) -> Result<SFox, HttpError> {
         let http_client = reqwest::Client::builder()
             .build()
             .map_err(|e| HttpError::InitializationError(e.to_string()))?;
 
-        let auth_token = settings.auth.api_key;
-        let server_url = settings.http.server_url;
+        let auth_token = env::var("SFOX_AUTH_TOKEN").map_err(|_| {
+            HttpError::InitializationError("SFOX_AUTH_TOKEN env variable not set.".to_string())
+        })?;
 
-        Ok(Client {
+        let server_url = match server_url {
+            Some(url) => url.into(),
+            None => env::var("SFOX_SERVER_URL").unwrap_or_else(|_| DEFAULT_SERVER_URL.to_string()),
+        };
+
+        println!("SERVER_URL: {}", server_url);
+
+        Ok(SFox {
             auth_token,
             http_client,
             server_url,
@@ -65,9 +73,8 @@ impl Client {
     where
         T: Clone + DeserializeOwned + Send + 'static,
     {
-        let base_response = self
-            .action(verb.clone(), &self.resource_path(resource))
-            .bearer_auth(self.auth_token);
+        let auth_token = self.auth_token.clone();
+        let base_response = self.action(verb.clone(), &resource).bearer_auth(auth_token);
 
         let response = if Self::has_request_body(verb, &req_body) {
             base_response.json(req_body.unwrap())
@@ -80,7 +87,7 @@ impl Client {
         response.and_then(|response| async move { parse_response(response).await })
     }
 
-    fn action(&self, verb: HttpVerb, resource_path: &str) -> reqwest::RequestBuilder {
+    fn action(self, verb: HttpVerb, resource_path: &str) -> reqwest::RequestBuilder {
         let c = &self.http_client;
         match verb {
             HttpVerb::Get => c.get(resource_path),
@@ -97,8 +104,8 @@ impl Client {
         }
     }
 
-    fn resource_path(&self, resource: &str) -> String {
-        format!("{}/v1/{}", self.server_url, resource)
+    fn url_from_resource(&self, resource: &str) -> String {
+        format!("{}/{}", self.server_url, resource)
     }
 }
 

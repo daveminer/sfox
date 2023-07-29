@@ -1,7 +1,7 @@
 use futures_util::Future;
 use serde::Deserialize;
 
-use super::super::{Client, HttpError, HttpVerb};
+use super::super::{HttpError, HttpVerb, SFox};
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct AccountBalance {
@@ -15,9 +15,12 @@ pub struct AccountBalance {
     pub trading_wallet: f64,
 }
 
-impl Client {
+const RESOURCE: &str = "user/balance";
+
+impl SFox {
     pub fn account_balance(self) -> impl Future<Output = Result<Vec<AccountBalance>, HttpError>> {
-        self.request::<Vec<AccountBalance>>(HttpVerb::Get, "user/balance", None)
+        let url = self.url_for_v1_resource(RESOURCE);
+        self.request::<Vec<AccountBalance>>(HttpVerb::Get, &url, None)
     }
 }
 
@@ -61,11 +64,10 @@ mod tests {
             .create_async()
             .await;
 
-        // TODO: allow server_url as input
-        let mut client = Client::new().unwrap();
-        client.server_url = format!("http://{}", s.host_with_port());
+        let server_url = format!("http://{}", s.host_with_port());
 
-        //let response = client.account_balance().await;
+        let client = SFox::new(Some(&server_url)).unwrap();
+        let response = client.account_balance().await;
 
         mock.assert();
     }
