@@ -1,4 +1,4 @@
-use sfox::http::SFox;
+use sfox::http::{v1::volume::Interval, SFox};
 
 #[tokio::test]
 async fn test_account_balance() {
@@ -127,7 +127,7 @@ async fn test_request_for_quote() {
         .request_for_quote("btcusd", "buy", Some(1.001), None, None)
         .await;
     println!("{:?}", response);
-    //assert!(response.is_ok());
+    assert!(response.is_ok());
 }
 
 // Untested
@@ -140,8 +140,62 @@ async fn test_request_for_quote() {
 //     assert!(response.is_ok());
 // }
 
+#[tokio::test]
+async fn test_candlesticks() {
+    let client = setup().await;
+
+    let response = client
+        .candlesticks("btcusd", 1690477895, 1690564295, 600)
+        .await;
+
+    assert!(response.is_ok());
+}
+
+//TODO: test response shape for flags
+#[tokio::test]
+async fn test_volume() {
+    let client = setup().await;
+
+    let response = client
+        .volume(
+            1690477895000,
+            1690564295000,
+            Interval::Hour,
+            "btc",
+            true,
+            true,
+        )
+        .await;
+
+    println!("RESP: {:?}", response);
+    assert!(response.is_ok());
+}
+
+#[tokio::test]
+async fn test_order_estimate() {
+    let client = setup().await;
+
+    let response = client
+        .order_estimate("buy", "btcusd", 1.01, 35000.05, "Smart")
+        .await;
+
+    println!("REPPP: {:?}", response.unwrap());
+
+    //assert!(response.is_ok());
+}
+
+#[tokio::test]
+async fn test_order_book() {
+    let client = setup().await;
+
+    let response = client.order_book("btcusd").await;
+
+    println!("REPPP: {:?}", response.unwrap());
+
+    //assert!(response.is_ok());
+}
+
 async fn setup() -> SFox {
-    //std::env::set_var("DEFAULT_SERVER_URL", "https://api.sfox.com");
     std::env::set_var("SFOX_AUTH_TOKEN", "secret-goes-here");
 
     return SFox::new(None).unwrap();

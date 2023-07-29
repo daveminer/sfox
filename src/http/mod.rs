@@ -6,7 +6,7 @@ use serde::de::DeserializeOwned;
 use serde_derive::Deserialize;
 use thiserror::Error;
 
-pub mod chart;
+pub mod candlesticks;
 pub mod v1;
 
 #[derive(Clone, Error, Debug, Deserialize)]
@@ -104,9 +104,9 @@ impl SFox {
         }
     }
 
-    fn url_from_resource(&self, resource: &str) -> String {
-        format!("{}/{}", self.server_url, resource)
-    }
+    // fn url_for_resource(&self, resource: &str) -> String {
+    //     format!("{}/{}", self.server_url, resource)
+    // }
 }
 
 async fn parse_response<T>(response: reqwest::Response) -> Result<T, HttpError>

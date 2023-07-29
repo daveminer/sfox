@@ -17,22 +17,23 @@ pub struct Candle {
     pub trades: usize,
 }
 
+static SERVER: &str = "https://chartdata.sfox.com";
+
 impl SFox {
     // Responses are limited to 500 candles.
     pub fn candlesticks(
         self,
         pair: &str,
-        start_time: &str,
-        end_time: &str,
+        start_time: usize,
+        end_time: usize,
         period_seconds: usize,
     ) -> impl Future<Output = Result<Vec<Candle>, HttpError>> {
-        self.request(
-            HttpVerb::Get,
-            &format!(
-                "candlesticks?pair={}&startTime={}&endTime={}&period={}",
-                pair, start_time, end_time, period_seconds
-            ),
-            None,
-        )
+        let query_str = format!(
+            "candlesticks?pair={}&startTime={}&endTime={}&period={}",
+            pair, start_time, end_time, period_seconds
+        );
+        let url = format!("{}/{}", SERVER, query_str);
+
+        self.request(HttpVerb::Get, &url, None)
     }
 }
