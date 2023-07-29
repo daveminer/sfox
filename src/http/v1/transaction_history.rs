@@ -1,7 +1,7 @@
 use futures_util::Future;
 use serde::Deserialize;
 
-use super::super::{Client, HttpError, HttpVerb};
+use super::super::{HttpError, HttpVerb, SFox};
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct TransactionHistory {
@@ -41,10 +41,11 @@ pub enum TransactionStatus {
     AdminHoldPendingReview,
 }
 
-impl Client {
+impl SFox {
     pub fn transaction_history(
         self,
     ) -> impl Future<Output = Result<Vec<TransactionHistory>, HttpError>> {
-        self.request(HttpVerb::Get, "account/transactions", None)
+        let url = self.url_for_v1_resource("account/transactions");
+        self.request(HttpVerb::Get, &url, None)
     }
 }

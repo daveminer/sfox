@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use futures_util::Future;
 use serde::Deserialize;
 
-use super::super::{Client, HttpError, HttpVerb};
+use super::super::{HttpError, HttpVerb, SFox};
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Withdrawal {
@@ -14,7 +14,7 @@ pub struct Withdrawal {
     pub is_wire: bool,
 }
 
-impl Client {
+impl SFox {
     pub fn withdraw(
         self,
         address: &str,
@@ -28,6 +28,8 @@ impl Client {
         params.insert("currency".to_string(), currency.to_string());
         params.insert("isWire".to_string(), is_wire.to_string());
 
-        self.request(HttpVerb::Post, "/user/withdraw", Some(&params))
+        let url = self.url_for_v1_resource("user/withdraw");
+
+        self.request(HttpVerb::Post, &url, Some(&params))
     }
 }

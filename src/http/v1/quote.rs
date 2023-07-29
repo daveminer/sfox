@@ -5,7 +5,7 @@ use std::pin::Pin;
 
 use super::bool_from_int;
 
-use crate::http::{Client, HttpError, HttpVerb};
+use crate::http::{HttpError, HttpVerb, SFox};
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Quote {
@@ -56,7 +56,7 @@ pub struct ExecutedQuote {
     pub quote_id: String,
 }
 
-impl Client {
+impl SFox {
     pub fn request_for_quote(
         self,
         pair: &str,
@@ -89,7 +89,9 @@ impl Client {
             params.insert("client_quote_id".into(), client_quote_id.to_string());
         }
 
-        Box::pin(self.request(HttpVerb::Post, "quote", Some(&params)))
+        let url = self.url_for_v1_resource("quote");
+
+        Box::pin(self.request(HttpVerb::Post, &url, Some(&params)))
     }
 
     pub fn execute_quote(
@@ -103,6 +105,8 @@ impl Client {
         params.insert("quantity".into(), quantity.to_string());
         params.insert("quote_id".into(), quote_id.to_string());
 
-        self.request(HttpVerb::Post, "orders/buy", Some(&params))
+        let url = self.url_for_v1_resource("orders/buy");
+
+        self.request(HttpVerb::Post, &url, Some(&params))
     }
 }
