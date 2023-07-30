@@ -2,5 +2,6 @@
   "rust-analyzer.linkedProjects": [
     "./Cargo.toml"
   ],
-  "editor.formatOnSave": true
+  "editor.formatOnSave": true,
+  "rust-analyzer.showUnlinkedFileNotification": false
 }
