@@ -87,7 +87,7 @@ async fn test_currency_pairs() {
 
 //     let response = SFox::place_order(
 //             "buy",
-//             "ETH/USDT",
+//             "btcusd",
 //             1994.72,
 //             0.0003,
 //             "NetPrice",
@@ -195,8 +195,151 @@ async fn test_order_book() {
     //assert!(response.is_ok());
 }
 
+// Untested
+// #[tokio::test]
+// async fn test_post_trade_settlement() {
+//     let client = setup().await;
+
+//     let response = client.post_trade_settlement().await;
+
+//     println!("REPPP: {:?}", response.unwrap());
+
+//     //assert!(response.is_ok());
+// }
+
+// Untested
+// #[tokio::test]
+// async fn test_post_trade_settlement_positions() {
+//     let client = setup().await;
+
+//     let response = client.post_trade_settlement_positions(None).await;
+
+//     println!("REPPP: {:?}", response.unwrap());
+
+//     //assert!(response.is_ok());
+// }
+
+#[tokio::test]
+async fn test_post_trade_settlement_interest() {
+    let client = setup().await;
+
+    let response = client.post_trade_settlement_interest().await;
+    assert!(response.is_ok());
+}
+
+// Untested
+// #[tokio::test]
+// async fn test_wallet_transfer() {
+//     let client = setup().await;
+
+//     let response = client
+//         .wallet_transfer("btc".into(), 0.001, "0x00".into(), "0x00".into())
+//         .await;
+//     assert!(response.is_ok());
+// }
+
+// Untested
+// #[tokio::test]
+// async fn test_loan_metrics() {
+//     let client = setup().await;
+
+//     let response = client.loan_metrics().await;
+
+//     assert!(response.is_ok());
+// }
+
+#[tokio::test]
+async fn test_loan_positions() {
+    let client = setup().await;
+
+    let response = client.loan_positions(Some("active".to_string())).await;
+
+    assert!(response.is_ok());
+}
+
+// Untested
+#[tokio::test]
+async fn test_custody_addresses() {
+    let client = setup().await;
+
+    let response = client.custody_addresses().await;
+
+    assert!(response.is_ok());
+}
+
+// Untested
+#[tokio::test]
+async fn test_add_custody_address() {
+    let client = setup().await;
+
+    let response = client
+        .add_custody_address(
+            "test alias".to_string(),
+            "btc".to_string(),
+            "OxOO".to_string(),
+        )
+        .await;
+
+    assert!(response.is_ok());
+}
+
+// Untested
+#[tokio::test]
+async fn test_approval_rules() {
+    let client = setup().await;
+
+    let response = client.approval_rules().await;
+
+    assert!(response.is_ok());
+}
+
+// Untested
+#[tokio::test]
+async fn test_add_approval_rule() {
+    let client = setup().await;
+
+    let response = client
+        .add_approval_rule("WITHDRAW".to_string(), 2, 0.01)
+        .await;
+
+    assert!(response.is_ok());
+}
+
+// Untested
+#[tokio::test]
+async fn test_edit_approval_rule() {
+    let client = setup().await;
+
+    let response = client.edit_approval_rule(1, 2, 0.01).await;
+
+    assert!(response.is_ok());
+}
+
+// Untested
+#[tokio::test]
+async fn test_approval_requests() {
+    let client = setup().await;
+
+    let response = client.approval_requests(Some(true)).await;
+
+    assert!(response.is_ok());
+}
+
+// Untested
+#[tokio::test]
+async fn test_respond_to_approval_request() {
+    let client = setup().await;
+
+    let response = client.respond_to_approval_request(1, true).await;
+
+    assert!(response.is_ok());
+}
+
 async fn setup() -> SFox {
-    std::env::set_var("SFOX_AUTH_TOKEN", "secret-goes-here");
+    std::env::set_var(
+        "SFOX_AUTH_TOKEN",
+        "29cfe5399d9a5f09abd6d48382245c382862b8a462a2d391a54166d54d6915ff",
+    );
 
     return SFox::new(None).unwrap();
 }
