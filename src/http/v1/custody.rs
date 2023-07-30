@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use crate::http::{HttpError, HttpVerb, SFox};
 
 #[derive(Clone, Debug, Deserialize)]
-enum ApprovalRuleType {
+pub enum ApprovalRuleType {
     #[serde(rename = "ADD_ALTER_COLL")]
     AddAlterColl,
 
@@ -13,7 +13,7 @@ enum ApprovalRuleType {
     AlterSafe,
 
     #[serde(rename = "WITHDRAW")]
-    Withdraw
+    Withdraw,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -129,12 +129,20 @@ impl SFox {
         self.request(HttpVerb::Get, &query_str, None)
     }
 
-    pub fn add_approval_rule(self, rule_type: String, required_approvals: usize, threshold: usize) -> impl Future<Output = Result<ApprovalRule, HttpError>> {
+    pub fn add_approval_rule(
+        self,
+        rule_type: String,
+        required_approvals: usize,
+        threshold: usize,
+    ) -> impl Future<Output = Result<ApprovalRule, HttpError>> {
         let query_str = self.url_for_v1_resource(APPROVAL_RULES_RESOURCE);
 
         let mut params = HashMap::new();
         params.insert("rule_type".to_string(), rule_type);
-        params.insert("required_approvals".to_string(), required_approvals.to_string());
+        params.insert(
+            "required_approvals".to_string(),
+            required_approvals.to_string(),
+        );
         params.insert("threshold".to_string(), threshold.to_string());
 
         self.request(HttpVerb::Post, &query_str, Some(&params))
@@ -161,8 +169,8 @@ impl SFox {
     ) -> impl Future<Output = Result<Vec<ApprovalRequest>, HttpError>> {
         let query_str = match pending {
             Some(true) => format!("{}?pending=true", APPROVAL_RESOURCE),
-            _ => APPROVAL_RESOURCE.to_string()
-        }
+            _ => APPROVAL_RESOURCE.to_string(),
+        };
 
         self.request(HttpVerb::Get, &query_str, None)
     }
@@ -170,10 +178,9 @@ impl SFox {
     pub fn respond_to_approval_request(
         self,
         id: usize,
-        approve: bool
+        approve: bool,
     ) -> impl Future<Output = Result<(), HttpError>> {
         let query_str = self.url_for_v1_resource(&format!("{}/{}", APPROVAL_RESOURCE, id));
-
 
         // TODO: handle polymorphic params
         let mut params = HashMap::new();

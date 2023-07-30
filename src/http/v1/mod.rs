@@ -16,8 +16,9 @@ pub mod order;
 pub mod order_book;
 pub mod post_trade_settlement;
 pub mod quote;
+pub mod report;
 pub mod short;
-pub mod transaction_history;
+pub mod staking;
 pub mod volume;
 pub mod withdraw;
 
