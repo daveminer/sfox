@@ -379,10 +379,7 @@ async fn test_unstake() {
 }
 
 async fn setup() -> SFox {
-    std::env::set_var(
-        "SFOX_AUTH_TOKEN",
-        "29cfe5399d9a5f09abd6d48382245c382862b8a462a2d391a54166d54d6915ff",
-    );
+    std::env::set_var("SFOX_AUTH_TOKEN", "secret-goes-here");
 
     return SFox::new(None).unwrap();
 }
