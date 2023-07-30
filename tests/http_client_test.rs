@@ -8,13 +8,6 @@ async fn test_account_balance() {
     assert!(response.is_ok());
 }
 
-#[tokio::test]
-async fn test_transaction_history() {
-    let client = setup().await;
-    let response = client.transaction_history().await;
-    assert!(response.is_ok());
-}
-
 // Untested
 //
 // #[tokio::test]
@@ -372,6 +365,51 @@ async fn test_unstake() {
     let client = setup().await;
 
     let response = client.unstake("avax".to_string(), 0.1).await;
+
+    println!("REPPP: {:?}", response.unwrap());
+
+    //assert!(response.is_ok());
+}
+
+// Untested
+#[tokio::test]
+async fn test_transaction_history() {
+    let client = setup().await;
+
+    let response = client
+        .transaction_history(
+            "2023-05-30T17:36:01.000Z".to_string(),
+            "2023-06-30T17:36:01.000Z".to_string(),
+            500,
+            0,
+            "charge,deposit,withdraw,credit,buy,sell".to_string(),
+        )
+        .await;
+
+    println!("REPPP: {:?}", response.unwrap());
+
+    //assert!(response.is_ok());
+}
+
+// Untested
+#[tokio::test]
+async fn test_orders_report() {
+    let client = setup().await;
+
+    let response = client.orders_report(1690477895, 1690564295).await;
+
+    println!("REPPP: {:?}", response.unwrap());
+
+    //assert!(response.is_ok());
+}
+
+#[tokio::test]
+async fn test_monthly_summary() {
+    let client = setup().await;
+
+    let response = client
+        .monthly_summary_by_asset("btc".to_string(), Some(1690477895), None)
+        .await;
 
     println!("REPPP: {:?}", response.unwrap());
 
