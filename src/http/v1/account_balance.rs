@@ -67,7 +67,7 @@ mod tests {
         let server_url = format!("http://{}", s.host_with_port());
 
         let client = SFox::new(Some(&server_url)).unwrap();
-        let response = client.account_balance().await;
+        let _response = client.account_balance().await;
 
         mock.assert();
     }
