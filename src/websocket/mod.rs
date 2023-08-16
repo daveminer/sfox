@@ -1,33 +1,26 @@
 use futures_util::{
     stream::{SplitSink, SplitStream},
-    StreamExt,
+    SinkExt, StreamExt,
 };
-use serde_derive::{Deserialize, Serialize};
-use std::env;
+use serde_json::json;
+use std::env::{self, VarError};
+
 use tokio::net::TcpStream;
 use tokio_tungstenite::{connect_async, tungstenite::Message, MaybeTlsStream, WebSocketStream};
 
 use crate::http::HttpError;
 
-pub mod market;
-pub mod orders;
+use self::message::{SubscribeAction, SubscribeMsg};
+
+pub mod message;
 
 static DEFAULT_WS_SERVER_URL: &str = "wss://ws.sfox.com/ws";
 
 #[derive(Debug)]
 pub struct SFoxWs {
-    // #[serde(skip)]
-    // pub auth_token: String,
     pub server_url: String,
     pub write: SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>,
     pub read: SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct SubscribeMsg {
-    #[serde(rename = "type")]
-    pub msg_type: String,
-    pub feeds: Vec<String>,
 }
 
 impl SFoxWs {
@@ -43,7 +36,7 @@ impl SFoxWs {
             Ok((stream, response)) => (stream, response),
             Err(e) => {
                 return Err(HttpError::InitializationError(format!(
-                    "Could not connect to websocke server: {}",
+                    "Could not connect to websocket server: {}",
                     e.to_string()
                 )))
             }
@@ -56,17 +49,63 @@ impl SFoxWs {
             )));
         }
 
-        // let auth_token = env::var("SFOX_AUTH_TOKEN").map_err(|_| {
-        //     HttpError::InitializationError("SFOX_AUTH_TOKEN env variable not set.".to_string())
-        // })?;
-
         let (write, read) = stream.split();
 
         Ok(SFoxWs {
-            // auth_token,
             server_url,
             write,
             read,
         })
     }
+
+    pub async fn authenticate(&mut self) -> Result<(), HttpError> {
+        let msg = match ws_auth_message() {
+            Ok(msg) => msg,
+            Err(e) => return Err(HttpError::InitializationError(e.to_string())),
+        };
+
+        match self.write.send(msg).await {
+            Ok(_) => Ok(()),
+            Err(e) => Err(HttpError::TransportError(e.to_string())),
+        }
+    }
+
+    pub async fn subscribe(&mut self, feeds: Vec<String>) -> Result<(), HttpError> {
+        match self
+            .write
+            .send(ws_feed_msg(feeds, SubscribeAction::Subscribe))
+            .await
+        {
+            Ok(_) => Ok(()),
+            Err(e) => Err(HttpError::TransportError(e.to_string())),
+        }
+    }
+
+    pub async fn unsubscribe(&mut self, feeds: Vec<String>) -> Result<(), HttpError> {
+        match self
+            .write
+            .send(ws_feed_msg(feeds, SubscribeAction::Unsubscribe))
+            .await
+        {
+            Ok(()) => Ok(()),
+            Err(e) => Err(HttpError::TransportError(e.to_string())),
+        }
+    }
+}
+
+fn ws_auth_message() -> Result<Message, VarError> {
+    let auth_token = env::var("SFOX_AUTH_TOKEN")?;
+
+    let msg = json!({
+      "type": "authenticate",
+      "apiKey": auth_token
+    })
+    .to_string();
+
+    Ok(Message::Text(msg))
+}
+
+fn ws_feed_msg(feeds: Vec<String>, action: SubscribeAction) -> Message {
+    let msg_type = action.into();
+    Message::Text(serde_json::to_string(&SubscribeMsg { msg_type, feeds }).unwrap())
 }
