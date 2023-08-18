@@ -5,10 +5,7 @@ use tokio_tungstenite::tungstenite::Message;
 #[tokio::test]
 async fn test_ws_message() {
     // TODO: remove and process response msgs
-    std::env::set_var(
-        "SFOX_AUTH_TOKEN",
-        "fc5db8f69bf87ab2a30bbddc2fcee57890d7f287c2f846f582610c3b61bff048",
-    );
+    std::env::set_var("SFOX_AUTH_TOKEN", "key-goes-here");
 
     let mut ws_client = SFoxWs::new(None).await.unwrap();
 

@@ -417,10 +417,7 @@ async fn test_monthly_summary() {
 }
 
 pub async fn setup() -> SFox {
-    std::env::set_var(
-        "SFOX_AUTH_TOKEN",
-        "fc5db8f69bf87ab2a30bbddc2fcee57890d7f287c2f846f582610c3b61bff048",
-    );
+    std::env::set_var("SFOX_AUTH_TOKEN", "key-goes-here");
 
     return SFox::new(None).unwrap();
 }
