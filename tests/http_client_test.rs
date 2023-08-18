@@ -416,8 +416,8 @@ async fn test_monthly_summary() {
     //assert!(response.is_ok());
 }
 
-async fn setup() -> SFox {
-    std::env::set_var("SFOX_AUTH_TOKEN", "secret-goes-here");
+pub async fn setup() -> SFox {
+    std::env::set_var("SFOX_AUTH_TOKEN", "key-goes-here");
 
     return SFox::new(None).unwrap();
 }

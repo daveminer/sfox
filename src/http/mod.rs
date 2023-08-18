@@ -11,11 +11,13 @@ pub mod v1;
 
 #[derive(Clone, Error, Debug, Deserialize)]
 pub enum HttpError {
+    #[error("Authentication error: {0}")]
+    AuthenticationError(String),
     #[error("could not create http client: {0}")]
     InitializationError(String),
     #[error("invalid request: {0}")]
     InvalidRequest(String),
-    #[error("error while making http request: {0}")]
+    #[error("error while making request: {0}")]
     TransportError(String),
     #[error("could not deserialize response. Error: {0}, Response: {1}")]
     UnparseableResponse(String, String),
