@@ -2,15 +2,15 @@ use futures_util::{
     stream::{SplitSink, SplitStream},
     SinkExt, StreamExt,
 };
-use serde_json::json;
-use std::env::{self, VarError};
+
+use std::env;
 
 use tokio::net::TcpStream;
 use tokio_tungstenite::{connect_async, tungstenite::Message, MaybeTlsStream, WebSocketStream};
 
 use crate::http::HttpError;
 
-use self::message::{SubscribeAction, SubscribeMsg};
+use self::message::{auth::auth_message, SubscribeAction, SubscribeMsg};
 
 pub mod message;
 
@@ -59,7 +59,7 @@ impl SFoxWs {
     }
 
     pub async fn authenticate(&mut self) -> Result<(), HttpError> {
-        let msg = match ws_auth_message() {
+        let msg = match auth_message() {
             Ok(msg) => msg,
             Err(e) => return Err(HttpError::InitializationError(e.to_string())),
         };
@@ -91,18 +91,6 @@ impl SFoxWs {
             Err(e) => Err(HttpError::TransportError(e.to_string())),
         }
     }
-}
-
-fn ws_auth_message() -> Result<Message, VarError> {
-    let auth_token = env::var("SFOX_AUTH_TOKEN")?;
-
-    let msg = json!({
-      "type": "authenticate",
-      "apiKey": auth_token
-    })
-    .to_string();
-
-    Ok(Message::Text(msg))
 }
 
 fn ws_feed_msg(feeds: Vec<String>, action: SubscribeAction) -> Message {
