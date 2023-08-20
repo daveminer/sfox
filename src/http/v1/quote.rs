@@ -5,7 +5,7 @@ use std::pin::Pin;
 
 use super::bool_from_int;
 
-use crate::http::{HttpError, HttpVerb, SFox};
+use crate::http::{Client, HttpError, HttpVerb};
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Quote {
@@ -56,7 +56,7 @@ pub struct ExecutedQuote {
     pub quote_id: String,
 }
 
-impl SFox {
+impl Client {
     pub fn request_for_quote(
         self,
         pair: &str,

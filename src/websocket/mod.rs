@@ -17,14 +17,14 @@ pub mod message;
 static DEFAULT_WS_SERVER_URL: &str = "wss://ws.sfox.com/ws";
 
 #[derive(Debug)]
-pub struct SFoxWs {
+pub struct ClientWs {
     pub server_url: String,
     pub write: SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>,
     pub read: SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>,
 }
 
-impl SFoxWs {
-    pub async fn new(server_url: Option<&str>) -> Result<SFoxWs, HttpError> {
+impl ClientWs {
+    pub async fn new(server_url: Option<&str>) -> Result<ClientWs, HttpError> {
         let server_url = match server_url {
             Some(url) => url.into(),
             None => {
@@ -51,7 +51,7 @@ impl SFoxWs {
 
         let (write, read) = stream.split();
 
-        Ok(SFoxWs {
+        Ok(ClientWs {
             server_url,
             write,
             read,

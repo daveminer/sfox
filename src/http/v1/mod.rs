@@ -3,7 +3,7 @@ use serde::{
     Deserialize,
 };
 
-use super::SFox;
+use super::Client;
 
 pub mod account_balance;
 pub mod ach_bank_transfer;
@@ -36,7 +36,7 @@ where
     }
 }
 
-impl SFox {
+impl Client {
     pub(crate) fn url_for_v1_resource(&self, resource: &str) -> String {
         format!("{}/v1/{}", self.server_url, resource)
     }

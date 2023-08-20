@@ -1,7 +1,7 @@
 use futures_util::Future;
 use serde::Deserialize;
 
-use super::super::{HttpError, HttpVerb, SFox};
+use super::super::{Client, HttpError, HttpVerb};
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Fees {
@@ -19,7 +19,7 @@ pub struct WithdrawFee {
     pub fee: f64,
 }
 
-impl SFox {
+impl Client {
     pub fn fees(self) -> impl Future<Output = Result<Fees, HttpError>> {
         let url = self.url_for_v1_resource("account/fee-rates");
         self.request(HttpVerb::Get, &url, None)

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use futures_util::Future;
 use serde_derive::Deserialize;
 
-use crate::http::{HttpError, HttpVerb, SFox};
+use crate::http::{Client, HttpError, HttpVerb};
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct TransactionHistory {
@@ -43,7 +43,7 @@ pub enum TransactionStatus {
     AdminHoldPendingReview,
 }
 
-impl SFox {
+impl Client {
     pub fn transaction_history(
         self,
         from: String,
