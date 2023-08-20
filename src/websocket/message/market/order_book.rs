@@ -42,5 +42,5 @@ impl ToString for BookType {
 }
 
 pub fn order_book_feed(basequote: &str, book_type: BookType) -> String {
-    return format!("orderbook.{}.{}", book_type.to_string(), basequote);
+    format!("orderbook.{}.{}", book_type.to_string(), basequote)
 }

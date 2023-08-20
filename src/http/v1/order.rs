@@ -53,6 +53,7 @@ impl Client {
         self.request(HttpVerb::Delete, &url, None)
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn place_order(
         self,
         side: &str,
