@@ -3,7 +3,7 @@ use std::pin::Pin;
 use futures_util::Future;
 use serde_derive::Deserialize;
 
-use crate::http::{HttpError, HttpVerb, SFox};
+use crate::http::{Client, HttpError, HttpVerb};
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct LoanMetrics {
@@ -42,7 +42,7 @@ pub struct LoanPosition {
     pub proceeds: usize,
 }
 
-impl SFox {
+impl Client {
     pub fn loan_metrics(self) -> impl Future<Output = Result<LoanMetrics, HttpError>> {
         let query_str = self.url_for_v1_resource("margin/account");
 

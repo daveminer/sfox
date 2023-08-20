@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use futures_util::Future;
 use serde::Deserialize;
 
-use super::super::{HttpError, HttpVerb, SFox};
+use super::super::{Client, HttpError, HttpVerb};
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct CryptoDepositAddress {
@@ -13,7 +13,7 @@ pub struct CryptoDepositAddress {
 
 const CRYPTO_DEPOSIT_ADDRESS_RESOURCE: &str = "user/deposit/address";
 
-impl SFox {
+impl Client {
     pub fn crypto_deposit_address(
         self,
         currency: &str,

@@ -2,7 +2,7 @@ use futures_util::Future;
 use serde::Deserialize;
 use std::collections::HashMap;
 
-use super::super::{HttpError, HttpVerb, SFox};
+use super::super::{Client, HttpError, HttpVerb};
 use super::bool_from_int;
 
 #[derive(Clone, Debug, Deserialize)]
@@ -40,7 +40,7 @@ pub struct CurrencyPair {
     pub quote: String,
 }
 
-impl SFox {
+impl Client {
     pub fn currencies(self) -> impl Future<Output = Result<Vec<Currency>, HttpError>> {
         let url = self.url_for_v1_resource("currency");
         self.request(HttpVerb::Get, &url, None)

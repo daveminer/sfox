@@ -1,4 +1,4 @@
-use sfox::http::{v1::volume::Interval, SFox};
+use sfox::http::{v1::volume::Interval, Client};
 
 #[tokio::test]
 async fn test_account_balance() {
@@ -78,7 +78,7 @@ async fn test_currency_pairs() {
 // async fn test_place_order() {
 //     let client = Client::new().unwrap();
 
-//     let response = SFox::place_order(
+//     let response = Client::place_order(
 //             "buy",
 //             "btcusd",
 //             1994.72,
@@ -94,21 +94,21 @@ async fn test_currency_pairs() {
 // Untested
 // #[tokio::test]
 // async fn test_cancel_order() {
-//     let response = SFox::cancel_order("123").await;
+//     let response = Client::cancel_order("123").await;
 //     assert!(response.is_ok());
 // }
 
 // Untested
 // #[tokio::test]
 // async fn test_cancel_order() {
-//     let response = SFox::cancel_orders(vec![123, 456]).await;
+//     let response = Client::cancel_orders(vec![123, 456]).await;
 //     assert!(response.is_ok());
 // }
 
 // Untested
 // #[tokio::test]
 // async fn test_cancel_all_orders() {
-//     let response = SFox::cancel_all_orders().await;
+//     let response = Client::cancel_all_orders().await;
 //     assert!(response.is_ok());
 // }
 
@@ -127,7 +127,7 @@ async fn test_request_for_quote() {
 
 // #[tokio::test]
 // async fn test_execute_order_on_quote() {
-//     let response = SFox::request_for_quote("btcusd", "buy", Some(1.001), None, None)
+//     let response = Client::request_for_quote("btcusd", "buy", Some(1.001), None, None)
 //         .await;
 //     println!("{:?}", response);
 //     assert!(response.is_ok());
@@ -416,8 +416,8 @@ async fn test_monthly_summary() {
     //assert!(response.is_ok());
 }
 
-pub async fn setup() -> SFox {
+pub async fn setup() -> Client {
     std::env::set_var("SFOX_AUTH_TOKEN", "key-goes-here");
 
-    return SFox::new(None).unwrap();
+    return Client::new().unwrap();
 }

@@ -1,7 +1,7 @@
 use futures_util::Future;
 use serde::Deserialize;
 
-use super::SFox;
+use super::Client;
 use crate::http::{HttpError, HttpVerb};
 
 pub enum Interval {
@@ -28,7 +28,7 @@ pub struct ExchangeVolume {
     pub usd_notional: f64,
 }
 
-impl SFox {
+impl Client {
     pub fn volume(
         self,
         start_time: usize,

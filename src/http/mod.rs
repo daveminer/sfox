@@ -24,7 +24,7 @@ pub enum HttpError {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct SFox {
+pub struct Client {
     #[serde(skip)]
     pub auth_token: String,
     #[serde(skip)]
@@ -42,28 +42,18 @@ pub enum HttpVerb {
 
 pub const DEFAULT_SERVER_URL: &str = "https://api.sfox.com";
 
-impl SFox {
-    pub fn new(server_url: Option<&str>) -> Result<SFox, HttpError> {
-        let http_client = reqwest::Client::builder()
-            .build()
-            .map_err(|e| HttpError::InitializationError(e.to_string()))?;
+impl Client {
+    pub fn new() -> Result<Client, HttpError> {
+        let server_url = env::var("SFOX_SERVER_URL")
+            .unwrap_or_else(|_| DEFAULT_SERVER_URL.to_string());
 
-        let auth_token = env::var("SFOX_AUTH_TOKEN").map_err(|_| {
-            HttpError::InitializationError("SFOX_AUTH_TOKEN env variable not set.".to_string())
-        })?;
+        build_server(server_url)
+    }
 
-        let server_url = match server_url {
-            Some(url) => url.into(),
-            None => env::var("SFOX_SERVER_URL").unwrap_or_else(|_| DEFAULT_SERVER_URL.to_string()),
-        };
-
-        println!("SERVER_URL: {}", server_url);
-
-        Ok(SFox {
-            auth_token,
-            http_client,
-            server_url,
-        })
+    pub fn new_with_server_url(
+        server_url: String,
+    ) -> Result<Client, HttpError> {
+        build_server(server_url)
     }
 
     fn request<T>(
@@ -76,7 +66,8 @@ impl SFox {
         T: Clone + DeserializeOwned + Send + 'static,
     {
         let auth_token = self.auth_token.clone();
-        let base_response = self.action(verb.clone(), &resource).bearer_auth(auth_token);
+        let base_response =
+            self.action(verb.clone(), &resource).bearer_auth(auth_token);
 
         let response = if Self::has_request_body(verb, &req_body) {
             base_response.json(req_body.unwrap())
@@ -86,10 +77,15 @@ impl SFox {
         .send()
         .map_err(|e| HttpError::TransportError(e.to_string()));
 
-        response.and_then(|response| async move { parse_response(response).await })
+        response
+            .and_then(|response| async move { parse_response(response).await })
     }
 
-    fn action(self, verb: HttpVerb, resource_path: &str) -> reqwest::RequestBuilder {
+    fn action(
+        self,
+        verb: HttpVerb,
+        resource_path: &str,
+    ) -> reqwest::RequestBuilder {
         let c = &self.http_client;
         match verb {
             HttpVerb::Get => c.get(resource_path),
@@ -99,7 +95,10 @@ impl SFox {
         }
     }
 
-    fn has_request_body(verb: HttpVerb, req_body: &Option<&HashMap<String, String>>) -> bool {
+    fn has_request_body(
+        verb: HttpVerb,
+        req_body: &Option<&HashMap<String, String>>,
+    ) -> bool {
         match verb {
             HttpVerb::Get | HttpVerb::Delete => false,
             HttpVerb::Post | HttpVerb::Patch => req_body.is_some(),
@@ -109,6 +108,24 @@ impl SFox {
     // fn url_for_resource(&self, resource: &str) -> String {
     //     format!("{}/{}", self.server_url, resource)
     // }
+}
+
+fn build_server(server_url: String) -> Result<Client, HttpError> {
+    let http_client = reqwest::Client::builder()
+        .build()
+        .map_err(|e| HttpError::InitializationError(e.to_string()))?;
+
+    let auth_token = env::var("SFOX_AUTH_TOKEN").map_err(|_| {
+        HttpError::InitializationError(
+            "SFOX_AUTH_TOKEN env variable not set.".to_string(),
+        )
+    })?;
+
+    Ok(Client {
+        auth_token,
+        http_client,
+        server_url,
+    })
 }
 
 async fn parse_response<T>(response: reqwest::Response) -> Result<T, HttpError>

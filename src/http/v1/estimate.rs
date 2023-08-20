@@ -1,7 +1,7 @@
 use futures_util::Future;
 use serde::Deserialize;
 
-use super::SFox;
+use super::Client;
 use crate::http::{HttpError, HttpVerb};
 
 #[derive(Clone, Debug, Deserialize)]
@@ -22,7 +22,7 @@ pub struct Estimate {
     pub routing_type: RoutingType,
 }
 
-impl SFox {
+impl Client {
     pub fn order_estimate(
         self,
         side: &str,

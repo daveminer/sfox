@@ -1,7 +1,7 @@
 use futures_util::Future;
 use serde::Deserialize;
 
-use super::{HttpError, HttpVerb, SFox};
+use super::{Client, HttpError, HttpVerb};
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Candle {
@@ -19,7 +19,7 @@ pub struct Candle {
 
 static SERVER: &str = "https://chartdata.sfox.com";
 
-impl SFox {
+impl Client {
     // Responses are limited to 500 candles.
     pub fn candlesticks(
         self,

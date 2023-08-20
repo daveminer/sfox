@@ -1,7 +1,7 @@
 use futures_util::Future;
 use serde::Deserialize;
 
-use super::SFox;
+use super::Client;
 use crate::http::{HttpError, HttpVerb};
 
 #[derive(Clone, Debug, Deserialize)]
@@ -29,7 +29,7 @@ pub struct OpenOrder {
     pub exchange: String,
 }
 
-impl SFox {
+impl Client {
     pub fn order_book(self, pair: &str) -> impl Future<Output = Result<OrderBook, HttpError>> {
         let query_str = format!("markets/orderbook/{}", pair);
         let url = self.url_for_v1_resource(&query_str);

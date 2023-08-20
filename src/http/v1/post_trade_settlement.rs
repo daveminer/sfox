@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use futures_util::Future;
 use serde::Deserialize;
 
-use super::SFox;
+use super::Client;
 use crate::http::{HttpError, HttpVerb};
 
 #[derive(Clone, Debug, Deserialize)]
@@ -51,7 +51,7 @@ pub struct WalletTransfer {
     pub to_wallet: String,
 }
 
-impl SFox {
+impl Client {
     pub fn post_trade_settlement(
         self,
     ) -> impl Future<Output = Result<PostTradeSettlement, HttpError>> {

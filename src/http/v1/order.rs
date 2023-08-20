@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use futures_util::Future;
 use serde::Deserialize;
 
-use super::super::{HttpError, HttpVerb, SFox};
+use super::super::{Client, HttpError, HttpVerb};
 
 #[derive(Clone, Debug, Deserialize)]
 pub enum CancellationStatus {
@@ -23,7 +23,7 @@ pub struct CryptoDepositAddress {
     pub currency: String,
 }
 
-impl SFox {
+impl Client {
     pub fn cancel_all_orders(self) -> impl Future<Output = Result<Vec<CancelledOrder>, HttpError>> {
         let url = self.url_for_v1_resource("orders/open");
         self.request(HttpVerb::Delete, &url, None)

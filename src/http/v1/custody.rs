@@ -2,7 +2,7 @@ use futures_util::Future;
 use serde_derive::Deserialize;
 use std::collections::HashMap;
 
-use crate::http::{HttpError, HttpVerb, SFox};
+use crate::http::{Client, HttpError, HttpVerb};
 
 #[derive(Clone, Debug, Deserialize)]
 pub enum ApprovalRuleType {
@@ -100,7 +100,7 @@ static APPROVAL_RULES_RESOURCE: &str = "approval-rules";
 static APPROVAL_RESOURCE: &str = "approvals";
 static CUSTODY_RESOURCE: &str = "whitelisted-addresses";
 
-impl SFox {
+impl Client {
     pub fn custody_addresses(self) -> impl Future<Output = Result<LoanMetrics, HttpError>> {
         let query_str = self.url_for_v1_resource(CUSTODY_RESOURCE);
 
