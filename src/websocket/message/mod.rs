@@ -40,9 +40,9 @@ pub enum SubscribeAction {
     Unsubscribe,
 }
 
-impl Into<String> for SubscribeAction {
-    fn into(self) -> String {
-        match self {
+impl From<SubscribeAction> for String {
+    fn from(val: SubscribeAction) -> Self {
+        match val {
             SubscribeAction::Subscribe => "subscribe".to_string(),
             SubscribeAction::Unsubscribe => "unsubscribe".to_string(),
         }

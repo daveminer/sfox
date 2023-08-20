@@ -37,7 +37,7 @@ impl ClientWs {
             Err(e) => {
                 return Err(HttpError::InitializationError(format!(
                     "Could not connect to websocket server: {}",
-                    e.to_string()
+                    e
                 )))
             }
         };
