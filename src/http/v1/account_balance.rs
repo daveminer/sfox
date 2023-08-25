@@ -18,9 +18,7 @@ pub struct AccountBalance {
 const RESOURCE: &str = "user/balance";
 
 impl Client {
-    pub fn account_balance(
-        self,
-    ) -> impl Future<Output = Result<Vec<AccountBalance>, HttpError>> {
+    pub fn account_balance(self) -> impl Future<Output = Result<Vec<AccountBalance>, HttpError>> {
         let url = self.url_for_v1_resource(RESOURCE);
         self.request::<Vec<AccountBalance>>(HttpVerb::Get, &url, None)
     }

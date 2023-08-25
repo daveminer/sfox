@@ -3,6 +3,7 @@ use serde::Deserialize;
 
 use super::{Client, HttpError, HttpVerb};
 
+/// A single element of candlestick chart data returned from the API.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Candle {
     pub open_price: f64,
@@ -20,7 +21,8 @@ pub struct Candle {
 static SERVER: &str = "https://chartdata.sfox.com";
 
 impl Client {
-    // Responses are limited to 500 candles.
+    /// Candlestick chart data from the SFox markets.
+    /// Responses are limited to 500 candles from the server.
     pub fn candlesticks(
         self,
         pair: &str,
