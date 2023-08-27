@@ -97,3 +97,14 @@ fn ws_feed_msg(feeds: Vec<String>, action: SubscribeAction) -> Message {
     let msg_type = action.into();
     Message::Text(serde_json::to_string(&SubscribeMsg { msg_type, feeds }).unwrap())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_new() {
+        let maybe_ws = ClientWs::new(None).await;
+        assert!(maybe_ws.is_ok());
+    }
+}

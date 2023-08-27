@@ -41,3 +41,40 @@ impl Client {
         format!("{}/v1/{}", self.server_url, resource)
     }
 }
+
+#[cfg(test)]
+mod tests {
+
+    use std::env;
+
+    use serde_json::json;
+
+    use super::*;
+
+    #[test]
+    fn test_bool_from_int() {
+        // Test 0 -> false
+        let result = bool_from_int(json!(0)).unwrap();
+        assert_eq!(result, false);
+
+        // Test 1 -> true
+        let result = bool_from_int(json!(1)).unwrap();
+        assert_eq!(result, true);
+
+        // Test invalid value errors
+        let result = bool_from_int(json!(2));
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_url_for_v1_resource() {
+        let _ = env::set_var("SFOX_AUTH_TOKEN", "secret");
+        let client = Client::new_with_server_url("https://api.example.com".to_string()).unwrap();
+
+        let url = client.url_for_v1_resource("balances");
+        assert_eq!(url, "https://api.example.com/v1/balances");
+
+        let url = client.url_for_v1_resource("trades");
+        assert_eq!(url, "https://api.example.com/v1/trades");
+    }
+}
