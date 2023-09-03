@@ -39,3 +39,31 @@ impl Client {
         self.request(HttpVerb::Get, &url, None)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::env;
+
+    #[tokio::test]
+    async fn test_candlesticks() {
+        let _ = env::set_var("SFOX_AUTH_TOKEN", "abc123");
+        let client = Client::new().unwrap();
+
+        let timestamp = 1000000; //Utc::now().timestamp_millis() as usize;
+        let day_before = timestamp - 86400;
+
+        let response = client
+            .candlesticks("btcusd", day_before, timestamp, 3600)
+            .await;
+
+        assert!(response.is_ok());
+
+        let candles = response.unwrap();
+        println!("{:?}", candles);
+
+        // Add assertions on candles, e.g.:
+        assert_eq!(candles.len(), 24);
+        assert!(candles[0].start_time < candles[23].start_time);
+    }
+}

@@ -1,99 +1,114 @@
 use futures_util::{
     stream::{SplitSink, SplitStream},
-    SinkExt, StreamExt,
+    Future, SinkExt, StreamExt, TryFutureExt,
 };
-
-use std::env;
-
+use serde_derive::Deserialize;
+use std::{
+    env,
+    sync::{Arc, Mutex},
+};
+use thiserror::Error;
 use tokio::net::TcpStream;
 use tokio_tungstenite::{connect_async, tungstenite::Message, MaybeTlsStream, WebSocketStream};
 
 use crate::http::HttpError;
 
-use self::message::{auth::auth_message, SubscribeAction, SubscribeMsg};
+use self::message::{SubscribeAction, SubscribeMsg};
 
+mod auth;
 pub mod message;
 
 static DEFAULT_WS_SERVER_URL: &str = "wss://ws.sfox.com/ws";
 
-#[derive(Debug)]
-pub struct ClientWs {
-    pub server_url: String,
-    pub write: SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>,
-    pub read: SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>,
+#[derive(Clone, Error, Debug, Deserialize)]
+pub enum WebsocketClientError {
+    #[error("Authentication error: {0}")]
+    AuthenticationError(String),
+    #[error("could not create http client: {0}")]
+    InitializationError(String),
+    #[error("could not lock the write stream {0}")]
+    LockError(String),
+    #[error("could not send message: {0}")]
+    TxError(String),
 }
 
-impl ClientWs {
-    pub async fn new(server_url: Option<&str>) -> Result<ClientWs, HttpError> {
-        let server_url = match server_url {
-            Some(url) => url.into(),
-            None => {
-                env::var("SFOX_WS_SERVER_URL").unwrap_or_else(|_| DEFAULT_WS_SERVER_URL.to_string())
-            }
-        };
+#[derive(Debug)]
+pub struct Client {
+    pub server_url: String,
+    pub read: SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>,
+    write: Arc<Mutex<SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>>>,
+}
 
-        let (stream, response) = match connect_async(server_url.clone()).await {
-            Ok((stream, response)) => (stream, response),
-            Err(e) => {
-                return Err(HttpError::InitializationError(format!(
+impl Client {
+    /// Create a new server with the URL set in the environment
+    pub fn new() -> impl Future<Output = Result<Client, WebsocketClientError>> {
+        let server_url =
+            env::var("SFOX_WS_SERVER_URL").unwrap_or_else(|_| DEFAULT_WS_SERVER_URL.to_string());
+
+        Client::new_with_server_url(server_url)
+    }
+
+    /// Create a new server with the given server URL; useful for testing.
+    pub fn new_with_server_url(
+        server_url: String,
+    ) -> impl Future<Output = Result<Client, WebsocketClientError>> {
+        connect_async(server_url.clone())
+            .map_err(|e| {
+                WebsocketClientError::InitializationError(format!(
                     "Could not connect to websocket server: {}",
                     e
-                )))
-            }
-        };
+                ))
+            })
+            .and_then(|socket| async move {
+                let (stream, response) = socket;
 
-        if !response.status().is_informational() {
-            return Err(HttpError::InitializationError(format!(
-                "Could not connect to websocket: {:?}",
-                response
-            )));
-        }
+                if !response.status().is_informational() {
+                    return Err(WebsocketClientError::InitializationError(format!(
+                        "Websocket connection unsuccessful: {:?}",
+                        response
+                    )));
+                }
 
-        let (write, read) = stream.split();
+                let (write, read) = stream.split();
 
-        Ok(ClientWs {
-            server_url,
-            write,
-            read,
-        })
+                Ok(Client {
+                    server_url,
+                    read,
+                    write: Arc::new(Mutex::new(write)),
+                })
+            })
     }
 
-    pub async fn authenticate(&mut self) -> Result<(), HttpError> {
-        let msg = match auth_message() {
-            Ok(msg) => msg,
-            Err(e) => return Err(HttpError::InitializationError(e.to_string())),
-        };
-
-        match self.write.send(msg).await {
+    /// Subscribe to the given feeds.
+    pub async fn subscribe(&self, feeds: Vec<String>) -> Result<(), HttpError> {
+        match self.send(feed_msg(feeds, SubscribeAction::Subscribe)).await {
             Ok(_) => Ok(()),
             Err(e) => Err(HttpError::TransportError(e.to_string())),
         }
     }
 
-    pub async fn subscribe(&mut self, feeds: Vec<String>) -> Result<(), HttpError> {
+    // Unsubscribe from feeds that this socket has previously subscribed to.
+    pub async fn unsubscribe(&self, feeds: Vec<String>) -> Result<(), HttpError> {
         match self
-            .write
-            .send(ws_feed_msg(feeds, SubscribeAction::Subscribe))
-            .await
-        {
-            Ok(_) => Ok(()),
-            Err(e) => Err(HttpError::TransportError(e.to_string())),
-        }
-    }
-
-    pub async fn unsubscribe(&mut self, feeds: Vec<String>) -> Result<(), HttpError> {
-        match self
-            .write
-            .send(ws_feed_msg(feeds, SubscribeAction::Unsubscribe))
+            .send(feed_msg(feeds, SubscribeAction::Unsubscribe))
             .await
         {
             Ok(()) => Ok(()),
             Err(e) => Err(HttpError::TransportError(e.to_string())),
         }
     }
+
+    async fn send(&self, msg: Message) -> Result<(), WebsocketClientError> {
+        match self.write.lock() {
+            Ok(mut write) => write.send(msg).await.map_err(|e| {
+                WebsocketClientError::TxError(format!("Could not send message: {}", e))
+            }),
+            Err(e) => Err(WebsocketClientError::TxError(e.to_string())),
+        }
+    }
 }
 
-fn ws_feed_msg(feeds: Vec<String>, action: SubscribeAction) -> Message {
+fn feed_msg(feeds: Vec<String>, action: SubscribeAction) -> Message {
     let msg_type = action.into();
     Message::Text(serde_json::to_string(&SubscribeMsg { msg_type, feeds }).unwrap())
 }
@@ -104,7 +119,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_new() {
-        let maybe_ws = ClientWs::new(None).await;
+        let maybe_ws = Client::new().await;
         assert!(maybe_ws.is_ok());
     }
 }

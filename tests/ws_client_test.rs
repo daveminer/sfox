@@ -1,13 +1,14 @@
-use futures::{SinkExt, StreamExt};
-use sfox::websocket::{message::SubscribeMsg, ClientWs};
-use tokio_tungstenite::tungstenite::Message;
+use futures::StreamExt;
+use sfox::websocket::{message::SubscribeMsg, Client};
 
 #[tokio::test]
 async fn test_ws_message() {
     // TODO: remove and process response msgs
     std::env::set_var("SFOX_AUTH_TOKEN", "key-goes-here");
 
-    let mut ws_client = ClientWs::new(None).await.unwrap();
+    let ws_client = Client::new().await.unwrap();
+
+    //let read = &ws_client.read;
 
     // let ethbtc_subscription_msg = SubscribeMsg {
     //     msg_type: "subscribe".to_string(),
@@ -30,11 +31,14 @@ async fn test_ws_message() {
         .unwrap()
         .to_string();
 
-    ws_client.write.send(Message::Text(msg_str)).await.unwrap();
+    let _ = ws_client
+        .subscribe(vec!["private.user.balances".to_string()])
+        .await
+        .unwrap();
 
-    let ws_to_stdout = ws_client.read.for_each(|msg| async move {
-        println!("MSG: {:?}", &msg);
-    });
+    // let ws_to_stdout = &read.for_each(|msg| async move {
+    //     println!("MSG: {:?}", &msg);
+    // });
 
-    ws_to_stdout.await;
+    //ws_to_stdout;
 }

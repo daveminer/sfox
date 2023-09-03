@@ -2,7 +2,6 @@ use serde::Deserialize;
 use serde_derive::Serialize;
 
 pub mod account;
-pub mod auth;
 pub mod market;
 
 #[derive(Debug, Deserialize)]
