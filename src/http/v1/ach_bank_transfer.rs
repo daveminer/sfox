@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use super::super::{Client, HttpError, HttpVerb};
 
-const ACH_BANK_TRANSFER_RESOURCE: &str = "user/bank/deposit";
+static ACH_BANK_TRANSFER_RESOURCE: &str = "user/bank/deposit";
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct AchBankTransfer {

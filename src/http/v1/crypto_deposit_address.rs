@@ -11,7 +11,7 @@ pub struct CryptoDepositAddress {
     pub currency: String,
 }
 
-const CRYPTO_DEPOSIT_ADDRESS_RESOURCE: &str = "user/deposit/address";
+static CRYPTO_DEPOSIT_ADDRESS_RESOURCE: &str = "user/deposit/address";
 
 impl Client {
     pub fn crypto_deposit_address(

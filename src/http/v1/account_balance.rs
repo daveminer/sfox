@@ -15,7 +15,7 @@ pub struct AccountBalance {
     pub trading_wallet: f64,
 }
 
-const RESOURCE: &str = "user/balance";
+static RESOURCE: &str = "user/balance";
 
 impl Client {
     pub fn account_balance(self) -> impl Future<Output = Result<Vec<AccountBalance>, HttpError>> {

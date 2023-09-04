@@ -1,4 +1,3 @@
-use futures::StreamExt;
 use sfox::websocket::{message::SubscribeMsg, Client};
 
 #[tokio::test]
@@ -27,7 +26,7 @@ async fn test_ws_message() {
         feeds: vec!["private.user.balances".to_string()],
     };
 
-    let msg_str: String = serde_json::to_value(ethbtc_subscription_msg)
+    let _msg_str: String = serde_json::to_value(ethbtc_subscription_msg)
         .unwrap()
         .to_string();
 

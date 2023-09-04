@@ -43,7 +43,6 @@ impl Client {
             start_time, end_time, convert_interval(interval), currency, net, by_exchange
         );
         let url = self.url_for_v1_resource(&query_str);
-        println!("URL: {}", url);
 
         self.request(HttpVerb::Get, &url, None)
     }

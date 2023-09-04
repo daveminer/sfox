@@ -60,7 +60,6 @@ mod tests {
         assert!(response.is_ok());
 
         let candles = response.unwrap();
-        println!("{:?}", candles);
 
         // Add assertions on candles, e.g.:
         assert_eq!(candles.len(), 24);

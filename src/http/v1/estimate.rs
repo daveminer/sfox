@@ -36,7 +36,6 @@ impl Client {
             side, pair, quantity, maxspend, routing_type
         );
         let url = self.url_for_v1_resource(&query_str);
-        println!("URL: {}", url);
 
         self.request(HttpVerb::Get, &url, None)
     }

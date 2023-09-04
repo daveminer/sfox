@@ -33,7 +33,6 @@ impl Client {
     pub fn order_book(self, pair: &str) -> impl Future<Output = Result<OrderBook, HttpError>> {
         let query_str = format!("markets/orderbook/{}", pair);
         let url = self.url_for_v1_resource(&query_str);
-        //println!("URL: {}", url);
 
         self.request(HttpVerb::Get, &url, None)
     }

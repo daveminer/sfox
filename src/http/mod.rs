@@ -1,5 +1,5 @@
+use std::collections::HashMap;
 use std::env;
-use std::{collections::HashMap, fmt};
 
 use futures_util::{Future, TryFutureExt};
 use serde::de::DeserializeOwned;
@@ -79,20 +79,16 @@ impl Client {
         T: Clone + DeserializeOwned + Send + 'static,
     {
         let auth_token = self.auth_token.clone();
-        println!("SELF: P{:?}", self);
+
         let base_response = self.action(verb.clone(), resource).bearer_auth(auth_token);
 
-        println!("base_response: {:?}", base_response);
         let response = if Self::has_request_body(verb, &req_body) {
             base_response.json(req_body.unwrap())
         } else {
             base_response
         }
         .send()
-        .map_err(|e| {
-            println!("ERRRRR: {:?}", e);
-            HttpError::TransportError(e.to_string())
-        });
+        .map_err(|e| HttpError::TransportError(e.to_string()));
 
         response.and_then(|response| async move { parse_response(response).await })
     }
@@ -116,7 +112,6 @@ impl Client {
 }
 
 fn build_server(server_url: String) -> Result<Client, HttpError> {
-    println!("SERVER URL: {:?}", server_url);
     let http_client = reqwest::Client::builder()
         .build()
         .map_err(|e| HttpError::InitializationError(e.to_string()))?;
@@ -136,7 +131,6 @@ async fn parse_response<T>(response: reqwest::Response) -> Result<T, HttpError>
 where
     T: Clone + DeserializeOwned + Send + 'static,
 {
-    println!("RESP: {:?}", response);
     if !response.status().is_success() {
         let error_text = response.text().await.unwrap_or("no text".to_string());
         return Err(HttpError::TransportError(error_text));
