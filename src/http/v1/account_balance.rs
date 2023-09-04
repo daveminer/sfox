@@ -28,15 +28,9 @@ impl Client {
 mod tests {
     use super::*;
 
-    #[tokio::test]
-    async fn test_account_balance() {
-        let mut s = mockito::Server::new_async().await;
+    use crate::util::server::{new_server_and_client, ApiMock};
 
-        let mock = s
-            .mock("GET", "/v1/user/balance")
-            .with_status(200)
-            .with_body(
-                r#"
+    const RESPONSE_BODY: &str = r#"
                [
                  {
                    "currency": "USD",
@@ -59,16 +53,24 @@ mod tests {
                    "trading_wallet": 0
                  }
                ]
-           "#,
-            )
-            .create_async()
-            .await;
+           "#;
 
-        let server_url = format!("http://{}", s.host_with_port());
+    #[tokio::test]
+    async fn test_account_balance() {
+        let mock = ApiMock {
+            action: HttpVerb::Get,
+            body: RESPONSE_BODY.into(),
+            path: format!("/v1/{}", RESOURCE),
+            response_code: 200,
+        };
 
-        let client = Client::new_with_server_url(server_url).unwrap();
-        let _response = client.account_balance().await;
+        let (client, _server, mock_results) = new_server_and_client(vec![mock]).await;
+        let result = client.account_balance().await;
 
-        mock.assert();
+        assert!(result.is_ok());
+
+        for mock in mock_results {
+            mock.assert_async().await;
+        }
     }
 }
