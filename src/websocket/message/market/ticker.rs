@@ -1,6 +1,6 @@
 use serde_derive::Deserialize;
 
-use crate::websocket::message::WsResponse;
+use super::super::WsResponse;
 
 pub type WsTickerResponse = WsResponse<WsTickerResponsePayload>;
 

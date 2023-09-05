@@ -27,6 +27,6 @@ pub struct WsTradesResponsePayload {
     pub is_decimal: bool,
 }
 
-pub fn trade_feed(basequote: &str) -> String {
+pub fn trades_feed(basequote: &str) -> String {
     format!("trades.sfox.{}", basequote)
 }

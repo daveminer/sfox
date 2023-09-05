@@ -3,7 +3,7 @@ use std::env;
 
 use futures_util::{Future, TryFutureExt};
 use serde::de::DeserializeOwned;
-use serde_derive::Deserialize;
+use serde_derive::{Deserialize, Serialize};
 use thiserror::Error;
 
 /// Provides candlestick chart data.
@@ -34,12 +34,23 @@ pub struct Client {
     pub server_url: String,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum HttpVerb {
     Get,
     Post,
     Patch,
     Delete,
+}
+
+impl Into<&str> for HttpVerb {
+    fn into(self) -> &'static str {
+        match self {
+            HttpVerb::Get => "GET",
+            HttpVerb::Post => "POST",
+            HttpVerb::Patch => "PATCH",
+            HttpVerb::Delete => "DELETE",
+        }
+    }
 }
 
 pub const DEFAULT_SERVER_URL: &str = "https://api.sfox.com";
@@ -68,6 +79,7 @@ impl Client {
         T: Clone + DeserializeOwned + Send + 'static,
     {
         let auth_token = self.auth_token.clone();
+
         let base_response = self.action(verb.clone(), resource).bearer_auth(auth_token);
 
         let response = if Self::has_request_body(verb, &req_body) {
