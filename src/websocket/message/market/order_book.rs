@@ -20,7 +20,7 @@ pub struct MarketMaking {
     pub bids: Vec<Order>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct Order {
     pub price: f64,
     pub quantity: f64,

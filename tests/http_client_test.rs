@@ -311,7 +311,7 @@ async fn test_edit_approval_rule() {
 async fn test_approval_requests() {
     let client = setup().await;
 
-    let response = client.approval_requests(Some(true)).await;
+    let response = client.approval_requests(true).await;
 
     assert!(response.is_ok());
 }

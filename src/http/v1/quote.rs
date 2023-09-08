@@ -3,8 +3,6 @@ use serde_derive::Deserialize;
 use std::collections::HashMap;
 use std::pin::Pin;
 
-use super::bool_from_int;
-
 use crate::http::{Client, HttpError, HttpVerb};
 
 #[derive(Clone, Debug, Deserialize)]
@@ -18,42 +16,6 @@ pub struct Quote {
     pub date_quote: String,
     pub buy_price: Option<f64>,
     pub sell_price: Option<f64>,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-pub struct ExecutedQuote {
-    pub id: usize,
-    pub side_id: usize,
-    pub action: String,
-    pub algorithm_id: usize,
-    pub algorithm: String,
-    #[serde(rename = "type")]
-    pub execution_type: String,
-    pub pair: String,
-    pub quantity: f64,
-    pub price: f64,
-    pub amount: f64,
-    pub net_market_amount: f64,
-    #[serde(deserialize_with = "bool_from_int")]
-    pub filled: bool,
-    pub vwap: f64,
-    pub filled_amount: f64,
-    pub fees: f64,
-    pub net_proceeds: f64,
-    pub status: String,
-    pub status_code: usize,
-    pub routing_option: String,
-    pub routing_type: String,
-    pub time_in_force: String,
-    pub expires: Option<String>,
-    pub dateupdated: String,
-    pub client_order_id: Option<String>,
-    pub user_tx_id: Option<String>,
-    pub o_action: String,
-    pub algo_id: usize,
-    pub algorithm_options: Option<String>,
-    pub destination: Option<String>,
-    pub quote_id: String,
 }
 
 impl Client {
