@@ -81,7 +81,6 @@ mod tests {
             .order_estimate("buy", "ethusd", 0.5, 1.0, "Smart")
             .await;
 
-        println!("RESULT: {:?}", result);
         assert!(result.is_ok());
 
         for mock in mock_results {

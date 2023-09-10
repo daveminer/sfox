@@ -379,7 +379,6 @@ mod tests {
 
         let result = client.edit_approval_rule(rule_id, 2, 2.0).await;
 
-        println!("RESULT: {:?}", result);
         assert!(result.is_ok());
 
         for mock in mock_results {

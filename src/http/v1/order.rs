@@ -408,7 +408,6 @@ mod tests {
             .place_order(side, "ethusd", 0.123, 0.456, "NetPrice", 100, "123A".into())
             .await;
 
-        println!("RESULT: {:?}", result);
         assert!(result.is_ok());
 
         for mock in mock_results {
@@ -430,7 +429,6 @@ mod tests {
 
         let result = client.order_status(order_id).await;
 
-        println!("RESULT: {:?}", result);
         assert!(result.is_ok());
 
         for mock in mock_results {
@@ -451,7 +449,6 @@ mod tests {
 
         let result = client.open_orders().await;
 
-        println!("RESULT: {:?}", result);
         assert!(result.is_ok());
 
         for mock in mock_results {

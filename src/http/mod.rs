@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::env;
 
 use futures_util::{Future, TryFutureExt};
+use reqwest::Response;
 use serde::de::DeserializeOwned;
 use serde_derive::{Deserialize, Serialize};
 use thiserror::Error;
@@ -10,6 +11,8 @@ use thiserror::Error;
 pub mod candlesticks;
 /// API implementation.
 pub mod v1;
+
+pub const DEFAULT_SERVER_URL: &str = "https://api.sfox.com";
 
 #[derive(Clone, Error, Debug, Deserialize)]
 pub enum HttpError {
@@ -53,8 +56,6 @@ impl Into<&str> for HttpVerb {
     }
 }
 
-pub const DEFAULT_SERVER_URL: &str = "https://api.sfox.com";
-
 impl Client {
     /// Returns a new client with the default server URL.
     pub fn new() -> Result<Client, HttpError> {
@@ -78,19 +79,44 @@ impl Client {
     where
         T: Clone + DeserializeOwned + Send + 'static,
     {
+        self.send_request(verb, resource, req_body)
+            .and_then(|response| async move { parse_response(response).await })
+    }
+
+    fn request_text(
+        self,
+        verb: HttpVerb,
+        resource: &str,
+        req_body: Option<&HashMap<String, String>>,
+    ) -> impl Future<Output = Result<String, HttpError>> {
+        self.send_request(verb, resource, req_body)
+            .and_then(|response| async {
+                response
+                    .text()
+                    .await
+                    .map_err(|e| HttpError::TransportError(e.to_string()))
+            })
+    }
+
+    fn send_request(
+        self,
+        verb: HttpVerb,
+        resource: &str,
+        req_body: Option<&HashMap<String, String>>,
+    ) -> impl Future<Output = Result<Response, HttpError>> {
         let auth_token = self.auth_token.clone();
 
         let base_response = self.action(verb.clone(), resource).bearer_auth(auth_token);
 
-        let response = if Self::has_request_body(verb, &req_body) {
+        let request = if Self::has_request_body(verb, &req_body) {
             base_response.json(req_body.unwrap())
         } else {
             base_response
-        }
-        .send()
-        .map_err(|e| HttpError::TransportError(e.to_string()));
+        };
 
-        response.and_then(|response| async move { parse_response(response).await })
+        request
+            .send()
+            .map_err(|e| HttpError::TransportError(e.to_string()))
     }
 
     fn action(self, verb: HttpVerb, resource_path: &str) -> reqwest::RequestBuilder {
@@ -136,7 +162,7 @@ where
         return Err(HttpError::TransportError(error_text));
     }
 
-    let text = match response.text().await {
+    let text: String = match response.text().await {
         Ok(text) => text,
         Err(e) => return Err(HttpError::TransportError(e.to_string())),
     };

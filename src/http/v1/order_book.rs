@@ -200,7 +200,6 @@ mod tests {
 
         let result = client.order_book(pair).await;
 
-        println!("RESULT: {:?}", result);
         assert!(result.is_ok());
 
         for mock in mock_results {

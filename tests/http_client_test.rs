@@ -378,11 +378,11 @@ async fn test_transaction_history() {
 
     let response = client
         .transaction_history(
-            "2023-05-30T17:36:01.000Z".to_string(),
-            "2023-06-30T17:36:01.000Z".to_string(),
-            500,
-            0,
-            "charge,deposit,withdraw,credit,buy,sell".to_string(),
+            Some("2023-05-30T17:36:01.000Z".to_string()),
+            Some("2023-06-30T17:36:01.000Z".to_string()),
+            Some(500),
+            Some(0),
+            Some("charge,deposit,withdraw,credit,buy,sell".to_string()),
         )
         .await;
 
