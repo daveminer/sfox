@@ -81,59 +81,59 @@ mod tests {
     use crate::util::server::{new_server_and_client, ApiMock};
 
     const POSITIONS_RESPONSE_BODY: &str = r#"
-    {
-        "data": [
-            {
-                "id": 3835,
-                "status": "CLOSED",
-                "date_added": "2022-06-30T01:01:55.000Z",
-                "date_loan_closed": "2022-06-30T01:02:47.000Z",
-                "loan_currency": "btc",
-                "collateral_currency": "usd",
-                "pair": "btcusd",
-                "original_collateral_qty": 2101.94565,
-                "current_collateral_qty": 0,
-                "original_loan_qty": 0.1,
-                "current_loan_qty": 0,
-                "interest_qty": 0,
-                "interest_rate": 0.1,
-                "margin_type": "MARGIN_SHORT",
-                "order_id": 1127584,
-                "proceeds": 0
-            },
-            {
-                "id": 3836,
-                "status": "CLOSED",
-                "date_added": "2022-06-30T02:46:57.000Z",
-                "date_loan_closed": "2022-07-01T02:41:01.000Z",
-                "loan_currency": "btc",
-                "collateral_currency": "usd",
-                "pair": "btcusd",
-                "original_collateral_qty": 2107.60095,
-                "current_collateral_qty": 0,
-                "original_loan_qty": 0.1,
-                "current_loan_qty": 0,
-                "interest_qty": 0,
-                "interest_rate": 0.1,
-                "margin_type": "MARGIN_SHORT",
-                "order_id": 1127591,
-                "proceeds": 0
-            }
-        ]
-    }
+        {
+            "data": [
+                {
+                    "id": 3835,
+                    "status": "CLOSED",
+                    "date_added": "2022-06-30T01:01:55.000Z",
+                    "date_loan_closed": "2022-06-30T01:02:47.000Z",
+                    "loan_currency": "btc",
+                    "collateral_currency": "usd",
+                    "pair": "btcusd",
+                    "original_collateral_qty": 2101.94565,
+                    "current_collateral_qty": 0,
+                    "original_loan_qty": 0.1,
+                    "current_loan_qty": 0,
+                    "interest_qty": 0,
+                    "interest_rate": 0.1,
+                    "margin_type": "MARGIN_SHORT",
+                    "order_id": 1127584,
+                    "proceeds": 0
+                },
+                {
+                    "id": 3836,
+                    "status": "CLOSED",
+                    "date_added": "2022-06-30T02:46:57.000Z",
+                    "date_loan_closed": "2022-07-01T02:41:01.000Z",
+                    "loan_currency": "btc",
+                    "collateral_currency": "usd",
+                    "pair": "btcusd",
+                    "original_collateral_qty": 2107.60095,
+                    "current_collateral_qty": 0,
+                    "original_loan_qty": 0.1,
+                    "current_loan_qty": 0,
+                    "interest_qty": 0,
+                    "interest_rate": 0.1,
+                    "margin_type": "MARGIN_SHORT",
+                    "order_id": 1127591,
+                    "proceeds": 0
+                }
+            ]
+        }
     "#;
 
     const METRICS_RESPONSE_BODY: &str = r#"
-    {
-        "account_value": 100885.75696235,
-        "equity": 97850.05595684,
-        "position_notional": 88153.20356472,
-        "collateral": 97850.05595684,
-        "free_collateral": 97850.05595684,
-        "margin_level": 1.11,
-        "margin_call_level": 0.15,
-        "maintenance_margin_level": 0.05
-    }
+        {
+            "account_value": 100885.75696235,
+            "equity": 97850.05595684,
+            "position_notional": 88153.20356472,
+            "collateral": 97850.05595684,
+            "free_collateral": 97850.05595684,
+            "margin_level": 1.11,
+            "margin_call_level": 0.15,
+            "maintenance_margin_level": 0.05
+        }
     "#;
 
     #[tokio::test]
