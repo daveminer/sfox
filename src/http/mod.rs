@@ -5,6 +5,7 @@ use futures_util::{Future, TryFutureExt};
 use reqwest::Response;
 use serde::de::DeserializeOwned;
 use serde_derive::{Deserialize, Serialize};
+use serde_json::json;
 use thiserror::Error;
 
 /// Provides candlestick chart data.
@@ -16,15 +17,15 @@ pub const DEFAULT_SERVER_URL: &str = "https://api.sfox.com";
 
 #[derive(Clone, Error, Debug, Deserialize)]
 pub enum HttpError {
-    #[error("Authentication error: {0}")]
+    #[error("Authentication error: `{0}`")]
     AuthenticationError(String),
-    #[error("could not create http client: {0}")]
+    #[error("Could not create http client: `{0}`")]
     InitializationError(String),
-    #[error("invalid request: {0}")]
+    #[error("Invalid request: `{0}`")]
     InvalidRequest(String),
-    #[error("error while making request: {0}")]
+    #[error("Error while making request: `{0}`")]
     TransportError(String),
-    #[error("could not deserialize response. Error: {0}, Response: {1}")]
+    #[error("Could not deserialize response. Error: `{0}`, Response: `{1}`")]
     UnparseableResponse(String, String),
 }
 
@@ -158,8 +159,16 @@ where
     T: Clone + DeserializeOwned + Send + 'static,
 {
     if !response.status().is_success() {
-        let error_text = response.text().await.unwrap_or("no text".to_string());
-        return Err(HttpError::TransportError(error_text));
+        let error_text = response.json().await.unwrap_or(json!("{}"));
+        let error = error_text.get("error");
+        match error {
+            Some(error) => {
+                return Err(HttpError::InvalidRequest(error.to_string()));
+            }
+            None => {
+                return Err(HttpError::InvalidRequest(error_text.to_string()));
+            }
+        }
     }
 
     let text: String = match response.text().await {

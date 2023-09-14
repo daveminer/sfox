@@ -188,6 +188,10 @@ mod tests {
         {"id": 3, "status": "Cancel pending"}
     "#;
 
+    const CANCEL_MULTIPLE_ORDERS_FAILED_RESPONSE_BODY: &str = r#"
+        { "error": "the order ids provided were invalid or the orders were already done/canceled" }
+    "#;
+
     const OPEN_ORDERS_RESPONSE_BODY: &str = r#"
         [
             {
@@ -364,6 +368,38 @@ mod tests {
         let result = client.cancel_orders(vec![2, 3]).await;
 
         assert!(result.is_ok());
+
+        for mock in mock_results {
+            mock.assert_async().await;
+        }
+    }
+
+    #[tokio::test]
+    async fn test_cancel_multiple_orders_failed() {
+        let ids = vec![2, 3];
+        let ids_param = ids
+            .iter()
+            .map(|id| id.to_string())
+            .collect::<Vec<String>>()
+            .join(",");
+
+        let mock = ApiMock {
+            action: HttpVerb::Delete,
+            body: CANCEL_MULTIPLE_ORDERS_FAILED_RESPONSE_BODY.into(),
+            path: format!("/v1/{}?ids={}", ORDERS_RESOURCE, ids_param),
+            response_code: 400,
+        };
+
+        let (client, _server, mock_results) = new_server_and_client(vec![mock]).await;
+
+        let result = client.cancel_orders(vec![2, 3]).await;
+
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(
+            err.to_string()
+                == "Invalid request: `\"the order ids provided were invalid or the orders were already done/canceled\"`"
+        );
 
         for mock in mock_results {
             mock.assert_async().await;
