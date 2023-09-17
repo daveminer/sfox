@@ -246,6 +246,18 @@ mod tests {
         }
     "#;
 
+    const UNAUTHORIZED_RESPONSE_BODY: &str = r#"
+        {
+            "error": "invalid token. check authorization header."
+        }
+    "#;
+
+    const UNPROCESSABLE_ENTITY_RESPONSE_BODY: &str = r#"
+        {
+            "error": "currency must be a non-blank string"
+        }
+    "#;
+
     #[tokio::test]
     async fn test_total_volume() {
         let mock = ApiMock {
@@ -287,6 +299,58 @@ mod tests {
             .await;
 
         assert!(result.is_ok());
+
+        for mock in mock_results {
+            mock.assert_async().await;
+        }
+    }
+
+    #[tokio::test]
+    async fn test_volume_unauthorized() {
+        let mock = ApiMock {
+            action: HttpVerb::Get,
+            body: UNAUTHORIZED_RESPONSE_BODY.into(),
+            path: format!("/v1/{}?start_time=1694374019&end_time=1694384019&interval=3600&currency=btc&net=true&by_exchange=true", VOLUME_RESOURCE),
+            response_code: 401,
+        };
+
+        let (client, _server, mock_results) = new_server_and_client(vec![mock]).await;
+
+        let result = client
+            .volume(1694374019, 1694384019, Interval::Hour, "btc", true, true)
+            .await;
+
+        assert!(result.is_err());
+        assert!(
+            result.unwrap_err().to_string()
+                == "Invalid request: `\"invalid token. check authorization header.\"`"
+        );
+
+        for mock in mock_results {
+            mock.assert_async().await;
+        }
+    }
+
+    #[tokio::test]
+    async fn test_volume_unprocessable_entity() {
+        let mock = ApiMock {
+            action: HttpVerb::Get,
+            body: UNPROCESSABLE_ENTITY_RESPONSE_BODY.into(),
+            path: format!("/v1/{}?start_time=1694374019&end_time=1694384019&interval=3600&currency=&net=true&by_exchange=true", VOLUME_RESOURCE),
+            response_code: 422,
+        };
+
+        let (client, _server, mock_results) = new_server_and_client(vec![mock]).await;
+
+        let result = client
+            .volume(1694374019, 1694384019, Interval::Hour, "", true, true)
+            .await;
+
+        assert!(result.is_err());
+        assert!(
+            result.unwrap_err().to_string()
+                == "Invalid request: `\"currency must be a non-blank string\"`"
+        );
 
         for mock in mock_results {
             mock.assert_async().await;

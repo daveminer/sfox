@@ -98,9 +98,9 @@ mod tests {
         let result = client.fees().await;
 
         assert!(result.is_err());
-        let err = result.unwrap_err();
         assert!(
-            err.to_string() == "Invalid request: `\"invalid token. check authorization header.\"`"
+            result.unwrap_err().to_string()
+                == "Invalid request: `\"invalid token. check authorization header.\"`"
         );
 
         for mock in mock_results {
