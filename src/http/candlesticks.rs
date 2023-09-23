@@ -50,7 +50,7 @@ mod tests {
         let _ = env::set_var("SFOX_AUTH_TOKEN", "abc123");
         let client = Client::new().unwrap();
 
-        let timestamp = 1000000; //Utc::now().timestamp_millis() as usize;
+        let timestamp = 1000000;
         let day_before = timestamp - 86400;
 
         let response = client

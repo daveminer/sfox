@@ -82,7 +82,7 @@ impl Client {
 mod tests {
     use super::*;
 
-    use crate::util::server::{new_server_and_client, ApiMock};
+    use crate::util::server::{new_test_server_and_client, ApiMock};
 
     const REQUEST_FOR_QUOTE_RESPONSE_BODY: &str = r#"
         {
@@ -140,7 +140,7 @@ mod tests {
             response_code: 201,
         };
 
-        let (client, _server, mock_results) = new_server_and_client(vec![mock]).await;
+        let (client, _server, mock_results) = new_test_server_and_client(vec![mock]).await;
 
         let result = client
             .request_for_quote("btcusd", "sell", Some(1.0), Some(1.0), Some("123"))
@@ -162,7 +162,7 @@ mod tests {
             response_code: 201,
         };
 
-        let (client, _server, mock_results) = new_server_and_client(vec![mock]).await;
+        let (client, _server, mock_results) = new_test_server_and_client(vec![mock]).await;
 
         let result = client.execute_quote("btcusd", 1.0, "123").await;
 

@@ -119,7 +119,7 @@ impl Client {
 mod tests {
     use super::*;
 
-    use crate::util::server::{new_server_and_client, ApiMock};
+    use crate::util::server::{new_test_server_and_client, ApiMock};
 
     const TRANSACTION_HISTORY_RESPONSE_BODY: &str = r#"
     [
@@ -170,7 +170,7 @@ mod tests {
             response_code: 200,
         };
 
-        let (client, _server, mock_results) = new_server_and_client(vec![mock]).await;
+        let (client, _server, mock_results) = new_test_server_and_client(vec![mock]).await;
 
         let result = client
             .transaction_history(None, None, None, None, None)
@@ -192,7 +192,7 @@ mod tests {
             response_code: 200,
         };
 
-        let (client, _server, mock_results) = new_server_and_client(vec![mock]).await;
+        let (client, _server, mock_results) = new_test_server_and_client(vec![mock]).await;
 
         let result: Result<String, HttpError> = client.orders_report(703915618, 704255180).await;
 
@@ -212,7 +212,7 @@ mod tests {
             response_code: 200,
         };
 
-        let (client, _server, mock_results) = new_server_and_client(vec![mock]).await;
+        let (client, _server, mock_results) = new_test_server_and_client(vec![mock]).await;
 
         let result = client
             .monthly_summary_by_asset("btc".into(), Some(703915618), Some(704255180))

@@ -44,3 +44,42 @@ fn auth_message() -> Result<Message, VarError> {
 
     Ok(Message::Text(msg))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_auth_success_check() {
+        let msg = r#"
+        {
+            "type": "success",
+            "sequence": 1,
+            "payload": {
+            "action": "authenticate"
+            },
+            "timestamp": 1589389200000
+        }
+        "#;
+
+        let valid = Client::auth_message_check_success(msg).unwrap();
+
+        assert!(valid);
+    }
+
+    #[test]
+    fn test_auth_failure_check() {
+        let msg = r#"
+        {
+            "msgType": "error",
+            "payload": {
+            "action": "authenticate"
+            }
+        }
+        "#;
+
+        let valid = Client::auth_message_check_success(msg);
+
+        assert!(valid.is_err());
+    }
+}

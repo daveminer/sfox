@@ -182,7 +182,7 @@ impl Client {
 mod tests {
     use super::*;
 
-    use crate::util::server::{new_server_and_client, ApiMock};
+    use crate::util::server::{new_test_server_and_client, ApiMock};
 
     const CANCEL_PENDING_ORDER_RESPONSE_BODY: &str = r#"
         {"id": 3, "status": "Cancel pending"}
@@ -336,7 +336,7 @@ mod tests {
             response_code: 200,
         };
 
-        let (client, _server, mock_results) = new_server_and_client(vec![mock]).await;
+        let (client, _server, mock_results) = new_test_server_and_client(vec![mock]).await;
 
         let result = client.cancel_all_orders().await;
 
@@ -363,7 +363,7 @@ mod tests {
             response_code: 200,
         };
 
-        let (client, _server, mock_results) = new_server_and_client(vec![mock]).await;
+        let (client, _server, mock_results) = new_test_server_and_client(vec![mock]).await;
 
         let result = client.cancel_orders(vec![2, 3]).await;
 
@@ -390,7 +390,7 @@ mod tests {
             response_code: 400,
         };
 
-        let (client, _server, mock_results) = new_server_and_client(vec![mock]).await;
+        let (client, _server, mock_results) = new_test_server_and_client(vec![mock]).await;
 
         let result = client.cancel_orders(vec![2, 3]).await;
 
@@ -417,7 +417,7 @@ mod tests {
             response_code: 200,
         };
 
-        let (client, _server, mock_results) = new_server_and_client(vec![mock]).await;
+        let (client, _server, mock_results) = new_test_server_and_client(vec![mock]).await;
 
         let result = client.cancel_order(id).await;
         assert!(result.is_ok());
@@ -438,7 +438,7 @@ mod tests {
             response_code: 200,
         };
 
-        let (client, _server, mock_results) = new_server_and_client(vec![mock]).await;
+        let (client, _server, mock_results) = new_test_server_and_client(vec![mock]).await;
 
         let result = client
             .place_order(side, "ethusd", 0.123, 0.456, "NetPrice", 100, "123A".into())
@@ -461,7 +461,7 @@ mod tests {
             response_code: 200,
         };
 
-        let (client, _server, mock_results) = new_server_and_client(vec![mock]).await;
+        let (client, _server, mock_results) = new_test_server_and_client(vec![mock]).await;
 
         let result = client.order_status(order_id).await;
 
@@ -481,7 +481,7 @@ mod tests {
             response_code: 200,
         };
 
-        let (client, _server, mock_results) = new_server_and_client(vec![mock]).await;
+        let (client, _server, mock_results) = new_test_server_and_client(vec![mock]).await;
 
         let result = client.open_orders().await;
 
@@ -501,7 +501,7 @@ mod tests {
             response_code: 200,
         };
 
-        let (client, _server, mock_results) = new_server_and_client(vec![mock]).await;
+        let (client, _server, mock_results) = new_test_server_and_client(vec![mock]).await;
 
         let result = client.done_orders().await;
 
@@ -521,7 +521,7 @@ mod tests {
             response_code: 200,
         };
 
-        let (client, _server, mock_results) = new_server_and_client(vec![mock]).await;
+        let (client, _server, mock_results) = new_test_server_and_client(vec![mock]).await;
 
         let result = client.list_asset_pairs().await;
 

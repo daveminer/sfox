@@ -196,7 +196,7 @@ impl Client {
 mod tests {
     use super::*;
 
-    use crate::util::server::{new_server_and_client, ApiMock};
+    use crate::util::server::{new_test_server_and_client, ApiMock};
 
     const CUSTODY_ADDRESSES_RESPONSE_BODY: &str = r#"
         {
@@ -291,7 +291,7 @@ mod tests {
             response_code: 200,
         };
 
-        let (client, _server, mock_results) = new_server_and_client(vec![mock]).await;
+        let (client, _server, mock_results) = new_test_server_and_client(vec![mock]).await;
 
         let result = client.custody_addresses().await;
         assert!(result.is_ok());
@@ -310,7 +310,7 @@ mod tests {
             response_code: 200,
         };
 
-        let (client, _server, mock_results) = new_server_and_client(vec![mock]).await;
+        let (client, _server, mock_results) = new_test_server_and_client(vec![mock]).await;
 
         let result = client
             .add_custody_address("test alias".into(), "btc".into(), "0x123".into())
@@ -332,7 +332,7 @@ mod tests {
             response_code: 200,
         };
 
-        let (client, _server, mock_results) = new_server_and_client(vec![mock]).await;
+        let (client, _server, mock_results) = new_test_server_and_client(vec![mock]).await;
 
         let result = client.approval_rules().await;
         assert!(result.is_ok());
@@ -351,7 +351,7 @@ mod tests {
             response_code: 200,
         };
 
-        let (client, _server, mock_results) = new_server_and_client(vec![mock]).await;
+        let (client, _server, mock_results) = new_test_server_and_client(vec![mock]).await;
 
         let result = client
             .add_approval_rule("test rule type".into(), 1, 1)
@@ -375,7 +375,7 @@ mod tests {
             response_code: 200,
         };
 
-        let (client, _server, mock_results) = new_server_and_client(vec![mock]).await;
+        let (client, _server, mock_results) = new_test_server_and_client(vec![mock]).await;
 
         let result = client.edit_approval_rule(rule_id, 2, 2.0).await;
 
@@ -395,7 +395,7 @@ mod tests {
             response_code: 200,
         };
 
-        let (client, _server, mock_results) = new_server_and_client(vec![mock]).await;
+        let (client, _server, mock_results) = new_test_server_and_client(vec![mock]).await;
 
         let result = client.approval_requests(false).await;
 
@@ -417,7 +417,7 @@ mod tests {
             response_code: 200,
         };
 
-        let (client, _server, mock_results) = new_server_and_client(vec![mock]).await;
+        let (client, _server, mock_results) = new_test_server_and_client(vec![mock]).await;
 
         let result = client.respond_to_approval_request(request_id, true).await;
 

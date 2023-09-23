@@ -140,7 +140,7 @@ fn convert_interval<'a>(interval: Interval) -> &'a str {
 mod tests {
     use super::*;
 
-    use crate::util::server::{new_server_and_client, ApiMock};
+    use crate::util::server::{new_test_server_and_client, ApiMock};
 
     const GROSS_VOLUME_RESPONSE_BODY: &str = r#"
         {
@@ -270,7 +270,7 @@ mod tests {
             response_code: 200,
         };
 
-        let (client, _server, mock_results) = new_server_and_client(vec![mock]).await;
+        let (client, _server, mock_results) = new_test_server_and_client(vec![mock]).await;
 
         let result = client
             .volume(1694374019, 1694384019, Interval::Hour, "btc", false, false)
@@ -292,7 +292,7 @@ mod tests {
             response_code: 200,
         };
 
-        let (client, _server, mock_results) = new_server_and_client(vec![mock]).await;
+        let (client, _server, mock_results) = new_test_server_and_client(vec![mock]).await;
 
         let result = client
             .volume(1694374019, 1694384019, Interval::Hour, "btc", true, true)
@@ -314,7 +314,7 @@ mod tests {
             response_code: 401,
         };
 
-        let (client, _server, mock_results) = new_server_and_client(vec![mock]).await;
+        let (client, _server, mock_results) = new_test_server_and_client(vec![mock]).await;
 
         let result = client
             .volume(1694374019, 1694384019, Interval::Hour, "btc", true, true)
@@ -340,7 +340,7 @@ mod tests {
             response_code: 422,
         };
 
-        let (client, _server, mock_results) = new_server_and_client(vec![mock]).await;
+        let (client, _server, mock_results) = new_test_server_and_client(vec![mock]).await;
 
         let result = client
             .volume(1694374019, 1694384019, Interval::Hour, "", true, true)
