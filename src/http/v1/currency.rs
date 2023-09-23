@@ -61,7 +61,7 @@ impl Client {
 mod tests {
     use super::*;
 
-    use crate::util::server::{new_server_and_client, ApiMock};
+    use crate::util::server::{new_test_server_and_client, ApiMock};
 
     const CURRENCIES_RESPONSE_BODY: &str = r#"
         [
@@ -138,7 +138,7 @@ mod tests {
             response_code: 200,
         };
 
-        let (client, _server, mock_results) = new_server_and_client(vec![mock]).await;
+        let (client, _server, mock_results) = new_test_server_and_client(vec![mock]).await;
 
         let result = client.currencies().await;
 
@@ -158,7 +158,7 @@ mod tests {
             response_code: 200,
         };
 
-        let (client, _server, mock_results) = new_server_and_client(vec![mock]).await;
+        let (client, _server, mock_results) = new_test_server_and_client(vec![mock]).await;
 
         let result = client.currency_pairs().await;
 

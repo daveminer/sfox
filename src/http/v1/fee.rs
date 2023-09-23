@@ -41,7 +41,7 @@ impl Client {
 mod tests {
     use super::*;
 
-    use crate::util::server::{new_server_and_client, ApiMock};
+    use crate::util::server::{new_test_server_and_client, ApiMock};
 
     const FEES_RESPONSE_BODY: &str = r#"
         {
@@ -52,6 +52,12 @@ mod tests {
         }
     "#;
 
+    const FEES_INVALID_TOKEN_RESPONSE_BODY: &str = r#"
+        {
+            "error": "invalid token. check authorization header."
+        }
+    "#;
+
     const WITHDRAW_FEE_RESPONSE_BODY: &str = r#"
         {
             "fee": 0.001
@@ -59,7 +65,7 @@ mod tests {
     "#;
 
     #[tokio::test]
-    async fn test_fees() {
+    async fn test_fees_ok() {
         let mock = ApiMock {
             action: HttpVerb::Get,
             body: FEES_RESPONSE_BODY.into(),
@@ -67,11 +73,35 @@ mod tests {
             response_code: 200,
         };
 
-        let (client, _server, mock_results) = new_server_and_client(vec![mock]).await;
+        let (client, _server, mock_results) = new_test_server_and_client(vec![mock]).await;
 
         let result = client.fees().await;
 
         assert!(result.is_ok());
+
+        for mock in mock_results {
+            mock.assert_async().await;
+        }
+    }
+
+    #[tokio::test]
+    async fn test_fees_invalid_token() {
+        let mock = ApiMock {
+            action: HttpVerb::Get,
+            body: FEES_INVALID_TOKEN_RESPONSE_BODY.into(),
+            path: format!("/v1/{}", FEE_RESOURCE),
+            response_code: 401,
+        };
+
+        let (client, _server, mock_results) = new_test_server_and_client(vec![mock]).await;
+
+        let result = client.fees().await;
+
+        assert!(result.is_err());
+        assert!(
+            result.unwrap_err().to_string()
+                == "Invalid request: `\"invalid token. check authorization header.\"`"
+        );
 
         for mock in mock_results {
             mock.assert_async().await;
@@ -87,7 +117,7 @@ mod tests {
             response_code: 200,
         };
 
-        let (client, _server, mock_results) = new_server_and_client(vec![mock]).await;
+        let (client, _server, mock_results) = new_test_server_and_client(vec![mock]).await;
 
         let result = client.withdraw_fee("eth").await;
 

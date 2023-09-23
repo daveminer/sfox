@@ -115,7 +115,45 @@ fn feed_msg(feeds: Vec<String>, action: SubscribeAction) -> Message {
 
 #[cfg(test)]
 mod tests {
+    use crate::util::server::{start_test_ws_server, stop_test_ws_server};
+
     use super::*;
+
+    #[tokio::test]
+    async fn test_subscribe() {
+        let (stop, addr, _handle) = start_test_ws_server().await;
+
+        let client = Client::new_with_server_url(format!("ws://{}", addr))
+            .await
+            .unwrap();
+
+        let result = client.subscribe(vec!["btcusd".into()]).await;
+
+        stop_test_ws_server(stop).await;
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_unsubscribe() {
+        let (stop, addr, _handle) = start_test_ws_server().await;
+        let client = Client::new_with_server_url(format!("ws://{}", addr))
+            .await
+            .unwrap();
+
+        let result = client.unsubscribe(vec!["orders".into()]).await;
+
+        stop_test_ws_server(stop).await;
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_feed_msg() {
+        let feeds = vec!["btcusd".into(), "ethusd".into()];
+        let msg = feed_msg(feeds, SubscribeAction::Subscribe);
+        assert!(
+            msg == Message::Text(r#"{"type":"subscribe","feeds":["btcusd","ethusd"]}"#.to_string())
+        );
+    }
 
     #[tokio::test]
     async fn test_new() {

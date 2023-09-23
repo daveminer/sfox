@@ -2,8 +2,10 @@ use std::collections::HashMap;
 use std::env;
 
 use futures_util::{Future, TryFutureExt};
+use reqwest::Response;
 use serde::de::DeserializeOwned;
 use serde_derive::{Deserialize, Serialize};
+use serde_json::json;
 use thiserror::Error;
 
 /// Provides candlestick chart data.
@@ -11,17 +13,19 @@ pub mod candlesticks;
 /// API implementation.
 pub mod v1;
 
+pub const DEFAULT_SERVER_URL: &str = "https://api.sfox.com";
+
 #[derive(Clone, Error, Debug, Deserialize)]
 pub enum HttpError {
-    #[error("Authentication error: {0}")]
+    #[error("Authentication error: `{0}`")]
     AuthenticationError(String),
-    #[error("could not create http client: {0}")]
+    #[error("Could not create http client: `{0}`")]
     InitializationError(String),
-    #[error("invalid request: {0}")]
+    #[error("Invalid request: `{0}`")]
     InvalidRequest(String),
-    #[error("error while making request: {0}")]
+    #[error("Error while making request: `{0}`")]
     TransportError(String),
-    #[error("could not deserialize response. Error: {0}, Response: {1}")]
+    #[error("Could not deserialize response. Error: `{0}`, Response: `{1}`")]
     UnparseableResponse(String, String),
 }
 
@@ -53,8 +57,6 @@ impl Into<&str> for HttpVerb {
     }
 }
 
-pub const DEFAULT_SERVER_URL: &str = "https://api.sfox.com";
-
 impl Client {
     /// Returns a new client with the default server URL.
     pub fn new() -> Result<Client, HttpError> {
@@ -78,19 +80,44 @@ impl Client {
     where
         T: Clone + DeserializeOwned + Send + 'static,
     {
+        self.send_request(verb, resource, req_body)
+            .and_then(|response| async move { parse_response(response).await })
+    }
+
+    fn request_text(
+        self,
+        verb: HttpVerb,
+        resource: &str,
+        req_body: Option<&HashMap<String, String>>,
+    ) -> impl Future<Output = Result<String, HttpError>> {
+        self.send_request(verb, resource, req_body)
+            .and_then(|response| async {
+                response
+                    .text()
+                    .await
+                    .map_err(|e| HttpError::TransportError(e.to_string()))
+            })
+    }
+
+    fn send_request(
+        self,
+        verb: HttpVerb,
+        resource: &str,
+        req_body: Option<&HashMap<String, String>>,
+    ) -> impl Future<Output = Result<Response, HttpError>> {
         let auth_token = self.auth_token.clone();
 
         let base_response = self.action(verb.clone(), resource).bearer_auth(auth_token);
 
-        let response = if Self::has_request_body(verb, &req_body) {
+        let request = if Self::has_request_body(verb, &req_body) {
             base_response.json(req_body.unwrap())
         } else {
             base_response
-        }
-        .send()
-        .map_err(|e| HttpError::TransportError(e.to_string()));
+        };
 
-        response.and_then(|response| async move { parse_response(response).await })
+        request
+            .send()
+            .map_err(|e| HttpError::TransportError(e.to_string()))
     }
 
     fn action(self, verb: HttpVerb, resource_path: &str) -> reqwest::RequestBuilder {
@@ -132,11 +159,19 @@ where
     T: Clone + DeserializeOwned + Send + 'static,
 {
     if !response.status().is_success() {
-        let error_text = response.text().await.unwrap_or("no text".to_string());
-        return Err(HttpError::TransportError(error_text));
+        let error_text = response.json().await.unwrap_or(json!("{}"));
+        let error = error_text.get("error");
+        match error {
+            Some(error) => {
+                return Err(HttpError::InvalidRequest(error.to_string()));
+            }
+            None => {
+                return Err(HttpError::InvalidRequest(error_text.to_string()));
+            }
+        }
     }
 
-    let text = match response.text().await {
+    let text: String = match response.text().await {
         Ok(text) => text,
         Err(e) => return Err(HttpError::TransportError(e.to_string())),
     };
