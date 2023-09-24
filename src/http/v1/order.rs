@@ -332,7 +332,7 @@ mod tests {
         let mock = ApiMock {
             action: HttpVerb::Delete,
             body: ORDERS_RESPONSE_BODY.into(),
-            path: format!("/v1/{}", DONE_ORDERS_RESOURCE),
+            path: format!("/v1/{}", OPEN_ORDERS_RESOURCE),
             response_code: 200,
         };
 
@@ -398,7 +398,7 @@ mod tests {
         let err = result.unwrap_err();
         assert!(
             err.to_string()
-                == "Invalid request: `\"the order ids provided were invalid or the orders were already done/canceled\"`"
+                == "Error while making request: `\"the order ids provided were invalid or the orders were already done/canceled\"`"
         );
 
         for mock in mock_results {

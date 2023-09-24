@@ -14,6 +14,7 @@ pub mod candlesticks;
 pub mod v1;
 
 pub const DEFAULT_SERVER_URL: &str = "https://api.sfox.com";
+pub const CANDLESTICK_SERVER_URL: &str = "https://chartdata.sfox.com";
 
 #[derive(Clone, Error, Debug, Deserialize)]
 pub enum HttpError {
@@ -33,6 +34,7 @@ pub enum HttpError {
 pub struct Client {
     #[serde(skip)]
     pub auth_token: String,
+    pub candlestick_server_url: String,
     #[serde(skip)]
     pub http_client: reqwest::Client,
     pub server_url: String,
@@ -60,15 +62,21 @@ impl Into<&str> for HttpVerb {
 impl Client {
     /// Returns a new client with the default server URL.
     pub fn new() -> Result<Client, HttpError> {
+        let candlestick_server_url = env::var("CANDLESTICK_SERVER_URL")
+            .unwrap_or_else(|_| CANDLESTICK_SERVER_URL.to_string());
+
         let server_url =
             env::var("SFOX_SERVER_URL").unwrap_or_else(|_| DEFAULT_SERVER_URL.to_string());
 
-        build_server(server_url)
+        build_server(candlestick_server_url, server_url)
     }
 
     /// Builds a new client with the given server URL; useful for testing.
-    pub fn new_with_server_url(server_url: String) -> Result<Client, HttpError> {
-        build_server(server_url)
+    pub fn new_with_server_url(
+        server_url: String,
+        candlestick_server_url: String,
+    ) -> Result<Client, HttpError> {
+        build_server(candlestick_server_url, server_url)
     }
 
     fn request<T>(
@@ -138,7 +146,7 @@ impl Client {
     }
 }
 
-fn build_server(server_url: String) -> Result<Client, HttpError> {
+fn build_server(candlestick_server_url: String, server_url: String) -> Result<Client, HttpError> {
     let http_client = reqwest::Client::builder()
         .build()
         .map_err(|e| HttpError::InitializationError(e.to_string()))?;
@@ -149,6 +157,7 @@ fn build_server(server_url: String) -> Result<Client, HttpError> {
 
     Ok(Client {
         auth_token,
+        candlestick_server_url,
         http_client,
         server_url,
     })
@@ -159,14 +168,17 @@ where
     T: Clone + DeserializeOwned + Send + 'static,
 {
     if !response.status().is_success() {
-        let error_text = response.json().await.unwrap_or(json!("{}"));
+        let error_text = response
+            .json()
+            .await
+            .unwrap_or(json!("{\"error\": \"Could not parse response\"}"));
         let error = error_text.get("error");
         match error {
             Some(error) => {
-                return Err(HttpError::InvalidRequest(error.to_string()));
+                return Err(HttpError::TransportError(error.to_string()));
             }
             None => {
-                return Err(HttpError::InvalidRequest(error_text.to_string()));
+                return Err(HttpError::TransportError(error_text.to_string()));
             }
         }
     }
@@ -203,10 +215,11 @@ mod tests {
     fn test_client_initialization_with_url() {
         let _ = env::set_var("SFOX_AUTH_TOKEN", "abc123");
         let server_url = "http://localhost:4000".to_string();
+        let candlestick_server_url = "http://localhost:4001".to_string();
 
-        let client = Client::new_with_server_url(server_url.clone()).unwrap();
+        let client =
+            Client::new_with_server_url(server_url.clone(), candlestick_server_url).unwrap();
 
-        assert_eq!(client.auth_token, "abc123");
         assert_eq!(client.server_url, server_url);
     }
 

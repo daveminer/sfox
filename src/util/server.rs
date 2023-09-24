@@ -30,8 +30,9 @@ pub async fn new_test_server_and_client(
 ) -> (Client, mockito::ServerGuard, Vec<Mock>) {
     let (server, mocks) = start_test_http_server(api_mocks).await;
 
+    // Use the same url for testing HTTP and candlestick servers.
     (
-        Client::new_with_server_url(url(&server)).unwrap(),
+        Client::new_with_server_url(url(&server), url(&server)).unwrap(),
         server,
         mocks,
     )
@@ -85,19 +86,13 @@ pub async fn stop_test_ws_server(stop: Arc<AtomicBool>) {
 }
 
 async fn accept_connection(stream: TcpStream) {
-    let callback = |_req: &Request, mut response: Response| {
-        let headers = response.headers_mut();
-        headers.append("MyCustomHeader", ":)".parse().unwrap());
-
-        Ok(response)
-    };
+    let callback = |_req: &Request, response: Response| Ok(response);
     let mut ws_stream = accept_hdr_async(stream, callback)
         .await
         .expect("Error during the websocket handshake occurred");
 
     while let Some(msg) = ws_stream.next().await {
         let msg = msg.unwrap();
-        println!("MSG: {}", msg);
         if msg.is_text() || msg.is_binary() {
             ws_stream.send(msg).await.unwrap();
         }
