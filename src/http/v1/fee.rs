@@ -100,7 +100,7 @@ mod tests {
         assert!(result.is_err());
         assert!(
             result.unwrap_err().to_string()
-                == "Invalid request: `\"invalid token. check authorization header.\"`"
+                == "Error while making request: `\"invalid token. check authorization header.\"`"
         );
 
         for mock in mock_results {

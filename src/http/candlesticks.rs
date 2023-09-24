@@ -10,15 +10,13 @@ pub struct Candle {
     pub high_price: f64,
     pub low_price: f64,
     pub close_price: f64,
-    pub volume: usize,
-    pub start_time: String,
+    pub volume: f64,
+    pub start_time: usize,
     pub pair: String,
-    pub candle_period: String,
+    pub candle_period: usize,
     pub vwap: f64,
     pub trades: usize,
 }
-
-static SERVER: &str = "https://chartdata.sfox.com";
 
 impl Client {
     /// Candlestick chart data from the SFox markets.
@@ -31,10 +29,11 @@ impl Client {
         period_seconds: usize,
     ) -> impl Future<Output = Result<Vec<Candle>, HttpError>> {
         let query_str = format!(
-            "candlesticks?pair={}&startTime={}&endTime={}&period={}",
+            "?pair={}&startTime={}&endTime={}&period={}",
             pair, start_time, end_time, period_seconds
         );
-        let url = format!("{}/{}", SERVER, query_str);
+
+        let url = self.url_for_candlestick_resource(&query_str);
 
         self.request(HttpVerb::Get, &url, None)
     }
@@ -42,27 +41,59 @@ impl Client {
 
 #[cfg(test)]
 mod tests {
+    use crate::util::server::{new_test_server_and_client, ApiMock};
+
     use super::*;
-    use std::env;
+
+    const CANDLESTICKS_RESPONSE_BODY: &str = r#"
+    [
+        {
+          "open_price": 9654,
+          "high_price": 9662.37,
+          "low_price": 9653.66,
+          "close_price": 9655.73,
+          "volume": 6.31945755,
+          "start_time": 1592939280,
+          "pair": "btcusd",
+          "candle_period": 60,
+          "vwap": 9655.70504211,
+          "trades": 53
+        }
+      ]
+"#;
 
     #[tokio::test]
     async fn test_candlesticks() {
-        let _ = env::set_var("SFOX_AUTH_TOKEN", "abc123");
-        let client = Client::new().unwrap();
-
+        let pair = "btcusd";
         let timestamp = 1000000;
+        let period = 3600;
         let day_before = timestamp - 86400;
 
+        let mock = ApiMock {
+            action: HttpVerb::Get,
+            body: CANDLESTICKS_RESPONSE_BODY.into(),
+            // candlestick path resource is missing to match test server
+            path: format!(
+                "/candlesticks?pair={}&startTime={}&endTime={}&period={}",
+                pair, day_before, timestamp, period
+            ),
+            response_code: 200,
+        };
+
+        let (client, _server, mock_results) = new_test_server_and_client(vec![mock]).await;
+
         let response = client
-            .candlesticks("btcusd", day_before, timestamp, 3600)
+            .candlesticks("btcusd", day_before, timestamp, period)
             .await;
 
         assert!(response.is_ok());
 
         let candles = response.unwrap();
 
-        // Add assertions on candles, e.g.:
-        assert_eq!(candles.len(), 24);
-        assert!(candles[0].start_time < candles[23].start_time);
+        assert_eq!(candles.len(), 1);
+
+        for mock in mock_results {
+            mock.assert_async().await;
+        }
     }
 }

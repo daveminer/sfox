@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  merge_group:
+  push:
+    branches: [main]
+  pull_request:
+    branches: ['*']
+
+jobs:
+  test:
+    name: cargo test
+    runs-on: ubuntu-22.04
+    env:
+      RPSUMP_ENVIRONMENT: test
+    steps:
+      - name: Update apt
+        run: sudo apt-get update && sudo apt-get upgrade -y
+      - name: Install protobuf-compiler
+        run: sudo apt-get install protobuf-compiler -y
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@1.69.0
+      - run: make test
