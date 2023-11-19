@@ -4,5 +4,7 @@ doc:
 	cargo doc --open
 lint:
 	cargo clippy
-test:
+run:
+	cargo run
+t:
 	cargo test
