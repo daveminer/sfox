@@ -9,7 +9,7 @@ FIX - :x:
 
 
 ## Description  
-`sfox` provides typed, asynchronous wrappers around the [SFox.com API](https://www.sfox.com/api/docs) HTTP calls
+`sfox` provides typed, asynchronous wrappers around the [SFox.com API](https://docs.sfox.com/) HTTP calls
 as well as Serde types for websocket message deserialization.
 
 ## Installation
