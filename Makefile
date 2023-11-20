@@ -6,5 +6,5 @@ lint:
 	cargo clippy
 run:
 	cargo run
-t:
+test:
 	cargo test
