@@ -8,7 +8,7 @@
 as well as Serde types for websocket message deserialization.  
 
 HTTP - :heavy_check_mark:  
-Websocket  - :heavy_check_mark:  
+Websocket  - 🌱  _In development_  
 FIX - :x:
 
 ## Installation
