@@ -1,8 +1,7 @@
-use futures_util::SinkExt;
 use serde_derive::{Deserialize, Serialize};
 use tokio_tungstenite::tungstenite::Message;
 
-use crate::{http::HttpError, websocket::SFoxWs};
+use crate::http::HttpError;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SubscribeMsg {
@@ -19,21 +18,21 @@ pub enum OrderBookType {
     SFox,
 }
 
-impl SFoxWs {
-    pub async fn subscribe(&mut self, feeds: Vec<String>) -> Result<(), HttpError> {
-        let msg = SubscribeMsg {
-            msg_type: "subscribe".to_string(),
-            feeds,
-        };
+// impl SFoxWs {
+//     pub async fn subscribe(&mut self, feeds: Vec<String>) -> Result<(), HttpError> {
+//         let msg = SubscribeMsg {
+//             msg_type: "subscribe".to_string(),
+//             feeds,
+//         };
 
-        let msg = serde_json::to_string(&msg).map_err(|e| {
-            HttpError::InitializationError(format!("Could not serialize subscribe msg: {}", e))
-        })?;
+//         let msg = serde_json::to_string(&msg).map_err(|e| {
+//             HttpError::InitializationError(format!("Could not serialize subscribe msg: {}", e))
+//         })?;
 
-        self.write.send(Message::Text(msg)).await.map_err(|e| {
-            HttpError::InitializationError(format!("Could not send subscribe msg: {}", e))
-        })?;
+//         self.write.send(Message::Text(msg)).await.map_err(|e| {
+//             HttpError::InitializationError(format!("Could not send subscribe msg: {}", e))
+//         })?;
 
-        Ok(())
-    }
-}
+//         Ok(())
+//     }
+// }
