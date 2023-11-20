@@ -3,21 +3,21 @@
 [![CI](https://github.com/daveminer/sfox/actions/workflows/test.yml/badge.svg)](https://github.com/daveminer/sfox/actions/workflows/test.yml)
 
 
-## Description  
+## Description
 `sfox` provides typed, asynchronous wrappers around the [SFox.com API](https://docs.sfox.com/) HTTP calls
-as well as Serde types for websocket message deserialization.  
+as well as Serde types for websocket message deserialization.
 
-HTTP - :heavy_check_mark:  
-Websocket  - 🌱  _In development_  
+HTTP - :heavy_check_mark:
+Websocket  - :heavy_check_mark:
 FIX - :x:
 
 ## Installation
 
-Complete the steps in this section to make the `sfox` client available in your Rust application. 
+Complete the steps in this section to make the `sfox` client available in your Rust application.
 
 #### Environment
 
-Set `SFOX_AUTH_TOKEN` (created in the SFox web console) in your environment:    
+Set `SFOX_AUTH_TOKEN` (created in the SFox web console) in your environment:
 ```
 SFOX_AUTH_TOKEN=<AUTH-TOKEN>
 ```
@@ -26,7 +26,7 @@ _Note: The server URLs `SFOX_HTTP_SERVER_URL` and `SFOX_WS_SERVER_URL` are also 
 
 #### Dependency
 
-Add the following line under ```[dependencies]``` in your project's `Cargo.toml`:  
+Add the following line under ```[dependencies]``` in your project's `Cargo.toml`:
 ```
 sfox = { git = "https://github.com/daveminer/sfox.git", version = "0.1.0" }
 ```
@@ -55,3 +55,19 @@ Order book currency: OpenOrder { price: 35000.012, volume: 1.0, exchange: "some-
 #### Websocket
 
 _In Development_
+
+## Contributing
+
+Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are greatly appreciated.
+
+If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement". Don't forget to give the project a star! Thank you!
+
+Fork the Project
+Create your Feature Branch (git checkout -b feature/AmazingFeature)
+Commit your Changes (git commit -m 'Add some AmazingFeature')
+Push to the Branch (git push origin feature/AmazingFeature)
+Open a Pull Request
+
+## License
+
+Distributed under the MIT License. See `LICENSE.txt` for more information.
