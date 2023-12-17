@@ -1,5 +1,10 @@
 [package]
+authors = ["Dave Miner <dave@halyard.systems>"]
+description = "Client library for the SFox API"
+keywords = ["crytocurrency", "finance", "sfox", "trading"]
+license = "MIT"
 name = "sfox"
+repository = "https://github.com/davidminer/sfox"
 version = "0.1.0"
 edition = "2021"
 

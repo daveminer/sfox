@@ -10,7 +10,6 @@ use thiserror::Error;
 
 /// Provides candlestick chart data.
 pub mod candlesticks;
-/// API implementation.
 pub mod v1;
 
 pub const DEFAULT_SERVER_URL: &str = "https://api.sfox.com";
@@ -30,6 +29,7 @@ pub enum HttpError {
     UnparseableResponse(String, String),
 }
 
+///
 #[derive(Debug, Deserialize)]
 pub struct Client {
     #[serde(skip)]
@@ -59,6 +59,7 @@ impl Into<&str> for HttpVerb {
     }
 }
 
+/// Builds a new client with the default server URL.
 pub fn new() -> Result<Client, HttpError> {
     Client::new()
 }

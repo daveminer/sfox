@@ -6,7 +6,6 @@ pub type WsTickerResponse = WsResponse<WsTickerResponsePayload>;
 
 #[derive(Debug, Deserialize)]
 pub struct WsTickerResponsePayload {
-    #[serde(rename = "buyOrderId")]
     pub amount: f64,
     pub exchange: String,
     pub last: f64,
