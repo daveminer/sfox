@@ -1,13 +1,9 @@
 use serde_derive::Deserialize;
 
-use super::super::WsResponse;
-
-pub type WsBalanceResponse = WsResponse<WsBalanceResponsePayload>;
-
 pub static BALANCE_FEED: &str = "private.user.balances";
 
 #[derive(Debug, Deserialize)]
-pub struct WsBalanceResponsePayload {
+pub struct BalancePayload {
     pub enabled: String,
     pub equity: String,
     pub equity_for_withdrawals: String,

@@ -3,12 +3,24 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tokio_tungstenite::tungstenite::Message;
 
-use self::market::WsMarket;
+use self::account::balance::BalancePayload;
+use self::account::order::OrderPayload;
+use self::account::post_trade_settlement::PostTradeSettlementPayload;
+use self::market::orderbook::Orderbook;
+use self::market::ticker::Ticker;
+use self::market::trade::Trade;
 
 use super::{Client, WebsocketClientError};
 
 pub mod account;
 pub mod market;
+
+pub type BalanceResponse = WsResponse<BalancePayload>;
+pub type OrderResponse = WsResponse<OrderPayload>;
+pub type PostTradeSettlemtnResponse = WsResponse<PostTradeSettlementPayload>;
+pub type OrderbookResponse = WsResponse<Orderbook>;
+pub type TickerResponse = WsResponse<Ticker>;
+pub type TradeResponse = WsResponse<Trade>;
 
 /// Websocket messages fall under one of these categories.
 #[derive(Debug, Deserialize, PartialEq, Serialize)]
@@ -218,12 +230,15 @@ mod tests {
 
     use crate::{
         util::fixtures,
-        websocket::{message::Feed, Client},
+        websocket::{
+            message::{Feed, TradeResponse},
+            Client,
+        },
     };
 
     #[tokio::test]
     async fn test_feed_message_type_err() {
-        let msg = Message::Text(fixtures::WS_SUBSCRIBE_RESPONSE.to_string());
+        let msg = Message::Text(fixtures::SUBSCRIBE_PAYLOAD.to_string());
         let feed_msg_type = Client::feed_message_type(msg);
 
         assert!(feed_msg_type.is_err());
@@ -231,7 +246,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_feed_message_type_orderbook() {
-        let msg = Message::Text(fixtures::WS_NET_ORDERBOOK_RESPONSE.to_string());
+        let msg = Message::Text(fixtures::NET_ORDERBOOK_PAYLOAD.to_string());
         let feed_msg_type = Client::feed_message_type(msg).unwrap();
 
         assert!(feed_msg_type == Feed::NetOrderbook);
@@ -239,7 +254,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_feed_message_type_ticker() {
-        let msg = Message::Text(fixtures::WS_TICKER_RESPONSE.to_string());
+        let msg = Message::Text(fixtures::TICKER_PAYLOAD.to_string());
         let feed_msg_type = Client::feed_message_type(msg).unwrap();
 
         assert!(feed_msg_type == Feed::Ticker);
@@ -247,7 +262,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_feed_message_type_trade() {
-        let msg = Message::Text(fixtures::WS_TRADE_RESPONSE.to_string());
+        let msg = Message::Text(fixtures::TRADE_PAYLOAD.to_string());
         let feed_msg_type = Client::feed_message_type(msg).unwrap();
 
         assert!(feed_msg_type == Feed::Trade);
@@ -255,7 +270,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_feed_message_type_open_orders() {
-        let msg = Message::Text(fixtures::WS_OPEN_ORDERS_RESPONSE.to_string());
+        let msg = Message::Text(fixtures::OPEN_ORDERS_PAYLOAD.to_string());
         let feed_msg_type = Client::feed_message_type(msg).unwrap();
 
         assert!(feed_msg_type == Feed::Orders);
@@ -263,7 +278,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_feed_message_type_balances() {
-        let msg = Message::Text(fixtures::WS_BALANCES_RESPONSE.to_string());
+        let msg = Message::Text(fixtures::BALANCES_PAYLOAD.to_string());
         let feed_msg_type = Client::feed_message_type(msg).unwrap();
 
         assert!(feed_msg_type == Feed::Balances);
@@ -271,26 +286,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_feed_message_type_post_trade_settlement() {
-        let msg = Message::Text(fixtures::WS_POST_TRADE_SETTLEMENT_RESPONSE.to_string());
+        let msg = Message::Text(fixtures::POST_TRADE_SETTLEMENT_PAYLOAD.to_string());
         let feed_msg_type = Client::feed_message_type(msg).unwrap();
 
         assert!(feed_msg_type == Feed::PostTradeSettlement);
     }
-    // #[tokio::test]
-    // async fn test_feed_message_type_ticker() {
-    //     let msg = Message::Text(fixtures::WS_TICKER_RESPONSE.to_string());
-    //     let feed_msg_type = Client::feed_message_type(msg).unwrap();
-
-    //     assert!(feed_msg_type == FeedType::Ticker);
-    // }
-
-    // #[tokio::test]
-    // async fn test_feed_message_type_trade() {
-    //     let msg = Message::Text(fixtures::WS_TRADES_RESPONSE.to_string());
-    //     let feed_msg_type = Client::feed_message_type(msg).unwrap();
-
-    //     assert!(feed_msg_type == FeedType::Trade);
-    // }
 
     #[tokio::test]
     async fn test_serialize_balance() {
@@ -332,7 +332,6 @@ mod tests {
         );
 
         let msg = serde_json::to_string(&balance_subscription).unwrap();
-        println!("{:?}", msg);
         assert!(msg == "{\"type\":\"subscribe\",\"feeds\":[\"orderbook.sfox.btcusd\",\"orderbook.sfox.ethusd\"]}");
     }
 
@@ -345,8 +344,14 @@ mod tests {
         );
 
         let msg = serde_json::to_string(&balance_subscription).unwrap();
-        println!("{:?}", msg);
         assert!(msg == "{\"type\":\"subscribe\",\"feeds\":[\"ticker.sfox.btcusd\",\"ticker.sfox.ethusd\"]}");
+    }
+
+    #[tokio::test]
+    async fn test_deserialize_trade() {
+        let trade = fixtures::TRADE_PAYLOAD;
+
+        let _trade_response: TradeResponse = serde_json::from_str(trade).unwrap();
     }
 
     #[tokio::test]
@@ -358,7 +363,6 @@ mod tests {
         );
 
         let msg = serde_json::to_string(&balance_subscription).unwrap();
-        println!("{:?}", msg);
         assert!(msg == "{\"type\":\"subscribe\",\"feeds\":[\"trades.sfox.btcusd\",\"trades.sfox.ethusd\"]}");
     }
 

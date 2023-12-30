@@ -1,11 +1,7 @@
 use serde::Deserialize;
 
-use crate::websocket::message::WsResponse;
-
-pub type WsOrderBookResponse = WsResponse<WsOrderBook>;
-
 #[derive(Debug, Deserialize, PartialEq)]
-pub struct WsOrderBook {
+pub struct Orderbook {
     pub asks: Vec<Order>,
     pub bids: Vec<Order>,
     pub lastpublished: usize,

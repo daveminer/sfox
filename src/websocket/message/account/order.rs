@@ -1,13 +1,9 @@
 use serde_derive::Deserialize;
 
-use super::super::WsResponse;
-
-pub type WsOrdersResponse = WsResponse<WsOrdersResponsePayload>;
-
 pub static OPEN_ORDER_FEED: &str = "private.user.open-orders";
 
 #[derive(Debug, Deserialize)]
-pub struct WsOrdersResponsePayload {
+pub struct OrderPayload {
     pub id: String,
     pub client_order_id: String,
     pub status: String,
