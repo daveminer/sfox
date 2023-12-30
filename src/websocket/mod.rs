@@ -5,10 +5,9 @@ use thiserror::Error;
 use tokio::net::TcpStream;
 use tokio_tungstenite::{connect_async, tungstenite::Message, MaybeTlsStream, WebSocketStream};
 
-use self::message::{FeedType, SubscribeAction, SubscribeMsg};
+use self::message::{Feed, SubscribeAction, SubscribeMsg};
 
-mod auth;
-pub mod market;
+pub mod auth;
 pub mod message;
 
 type WsSink = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>;
@@ -72,7 +71,7 @@ impl Client {
     /// Subscribe to the provided feeds.
     pub async fn subscribe(
         write: &mut WsSink,
-        feed_type: FeedType,
+        feed_type: Feed,
         feeds: Vec<String>,
     ) -> Result<(), WebsocketClientError> {
         Self::send(
@@ -85,7 +84,7 @@ impl Client {
     /// Unsubscribe from feeds that this socket has previously subscribed to.
     pub async fn unsubscribe(
         write: &mut WsSink,
-        feed_type: FeedType,
+        feed_type: Feed,
         feeds: Vec<String>,
     ) -> Result<(), WebsocketClientError> {
         Self::send(
@@ -103,7 +102,7 @@ impl Client {
     }
 }
 
-fn feed_msg(feeds: Vec<String>, feed_type: FeedType, action: SubscribeAction) -> Message {
+fn feed_msg(feeds: Vec<String>, feed_type: Feed, action: SubscribeAction) -> Message {
     Message::Text(
         serde_json::to_string(&SubscribeMsg {
             action: action.into(),
@@ -131,9 +130,8 @@ mod tests {
 
         let (mut write, _read) = client.stream.split();
         let ticker_result =
-            Client::subscribe(&mut write, FeedType::Ticker, vec!["btcusd".into()]).await;
-        let trade_result =
-            Client::subscribe(&mut write, FeedType::Trade, vec!["btcusd".into()]).await;
+            Client::subscribe(&mut write, Feed::Ticker, vec!["btcusd".into()]).await;
+        let trade_result = Client::subscribe(&mut write, Feed::Trade, vec!["btcusd".into()]).await;
 
         stop_test_ws_server(stop).await;
         assert!(ticker_result.is_ok());
@@ -149,7 +147,7 @@ mod tests {
 
         let (mut write, _read) = client.stream.split();
         let result =
-            Client::unsubscribe(&mut write, FeedType::NetOrderbook, vec!["orders".into()]).await;
+            Client::unsubscribe(&mut write, Feed::NetOrderbook, vec!["orders".into()]).await;
 
         stop_test_ws_server(stop).await;
         assert!(result.is_ok());

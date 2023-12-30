@@ -21,10 +21,21 @@ pub struct MarketMaking {
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq)]
+#[serde(from = "(f64, f64, String)")]
 pub struct Order {
     pub price: f64,
     pub quantity: f64,
     pub source: String,
+}
+
+impl From<(f64, f64, String)> for Order {
+    fn from(data: (f64, f64, String)) -> Self {
+        Order {
+            price: data.0,
+            quantity: data.1,
+            source: data.2,
+        }
+    }
 }
 
 pub enum BookType {

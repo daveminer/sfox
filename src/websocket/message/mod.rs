@@ -1,4 +1,3 @@
-use serde::de::DeserializeOwned;
 use serde::ser::{SerializeStruct, Serializer};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -11,8 +10,12 @@ use super::{Client, WebsocketClientError};
 pub mod account;
 pub mod market;
 
+/// Websocket messages fall under one of these categories.
 #[derive(Debug, Deserialize, PartialEq, Serialize)]
-pub enum FeedType {
+pub enum Feed {
+    Balances,
+    Orders,
+    PostTradeSettlement,
     NetOrderbook,
     RawOrderbook,
     Ticker,
@@ -46,7 +49,7 @@ pub struct WsSystemResponse<T> {
 ///
 /// let order_msg = SubscribeMsg {
 ///     action: "subscribe".to_string(),
-///     feed_type: FeedType::RawOrderbook,
+///     feed_type: Feed::RawOrderbook,
 ///     feeds: vec!["btcusd".to_string()],
 /// };
 /// assert_eq!(
@@ -59,7 +62,7 @@ pub struct WsSystemResponse<T> {
 pub struct SubscribeMsg {
     pub action: String,
     #[serde(rename = "type")]
-    pub feed_type: FeedType,
+    pub feed_type: Feed,
     pub feeds: Vec<String>,
 }
 
@@ -68,70 +71,40 @@ impl Serialize for SubscribeMsg {
     where
         S: Serializer,
     {
-        let prefix = match self.feed_type {
-            FeedType::NetOrderbook => "orderbook.net",
-            FeedType::RawOrderbook => "orderbook.sfox",
-            FeedType::Ticker => "ticker.sfox",
-            FeedType::Trade => "trades.sfox",
+        let prefix_or_msg = match self.feed_type {
+            Feed::Balances => "private.user.balances",
+            Feed::NetOrderbook => "orderbook.net",
+            Feed::Orders => "private.user.open-orders",
+            Feed::PostTradeSettlement => "private.user.post-trade-settlement",
+            Feed::RawOrderbook => "orderbook.sfox",
+            Feed::Ticker => "ticker.sfox",
+            Feed::Trade => "trades.sfox",
         };
 
-        let feeds: Vec<String> = self
-            .feeds
-            .iter()
-            .map(|feed| format!("{}.{}", prefix, feed))
-            .collect();
+        let feeds: Vec<String> = if self.feed_type == Feed::NetOrderbook
+            || self.feed_type == Feed::RawOrderbook
+            || self.feed_type == Feed::Ticker
+            || self.feed_type == Feed::Trade
+        {
+            self.feeds
+                .iter()
+                .map(|feed| format!("{}.{}", prefix_or_msg, feed))
+                .collect()
+        } else {
+            vec![prefix_or_msg.into()]
+        };
 
         let mut state = serializer.serialize_struct("SubscribeMsg", 3)?;
-        state.serialize_field("action", &self.action)?;
-        state.serialize_field("type", &self.feed_type)?;
+        state.serialize_field("type", &self.action)?;
         state.serialize_field("feeds", &feeds)?;
         state.end()
     }
 }
 
 impl Client {
-    // pub fn feed_message_type(
-    //     message: Message,
-    // ) -> Result<WsMarketResponsePayload, WebsocketClientError> {
-    //     let message = match message.to_text() {
-    //         Ok(message) => message,
-    //         Err(e) => {
-    //             return Err(WebsocketClientError::ParseError(format!(
-    //                 "Not a message with text: {}",
-    //                 e
-    //             )))
-    //         }
-    //     };
-
-    //     let err_msg: String = match serde_json::from_str::<Value>(message) {
-    //         Ok(json) => {
-    //             if let Some(recipient) = json.get("recipient").and_then(Value::as_str) {
-    //                 if recipient.starts_with("orderbook.net") {
-    //                     return Ok(WsOrderBookResponsePayload);
-    //                 } else if recipient.starts_with("orderbook.sfox") {
-    //                     return Ok(FeedType::RawOrderbook);
-    //                 } else if recipient.starts_with("ticker") {
-    //                     return Ok(FeedType::Ticker);
-    //                 } else if recipient.starts_with("trades") {
-    //                     return Ok(FeedType::Trade);
-    //                 } else {
-    //                     format!("unknown feed type of {}", recipient)
-    //                 }
-    //             } else {
-    //                 format!("'recipient' key not found: {}", json)
-    //             }
-    //         }
-    //         Err(e) => format!("could not parse json: {}", e),
-    //     };
-
-    //     return Err(WebsocketClientError::ParseError(err_msg.to_string()));
-    // }
-
-    pub fn parse_feed_message(
-        message: Message,
-    ) -> Result<WsResponse<WsMarket>, WebsocketClientError> {
-        let text = match message.to_text() {
-            Ok(text) => text,
+    pub fn feed_message_type(message: Message) -> Result<Feed, WebsocketClientError> {
+        let message = match message.to_text() {
+            Ok(message) => message,
             Err(e) => {
                 return Err(WebsocketClientError::ParseError(format!(
                     "Not a message with text: {}",
@@ -140,20 +113,83 @@ impl Client {
             }
         };
 
-        let value: Value = serde_json::from_str(text).map_err(|e| {
-            WebsocketClientError::ParseError(format!("Unable to parse to JSON: {}", e))
-        })?;
+        let msg_json = match serde_json::from_str::<Value>(message) {
+            Ok(json) => json,
+            Err(e) => {
+                return Err(WebsocketClientError::ParseError(format!(
+                    "could not parse json: {}",
+                    e
+                )))
+            }
+        };
 
-        // let recipient = value
-        //     .get("recipient")
-        //     .and_then(Value::as_str)
-        //     .ok_or_else(|| {
-        //         WebsocketClientError::ParseError(format!("'recipient' key not found: {}", value))
-        //     })?;
+        let recipient = match msg_json.get("recipient").and_then(Value::as_str) {
+            Some(recipient) => recipient,
+            None => {
+                return Err(WebsocketClientError::ParseError(
+                    "could not find 'type' key in message".to_string(),
+                ))
+            }
+        };
 
-        serde_json::from_value::<WsResponse<WsMarket>>(value)
-            .map_err(|e| WebsocketClientError::ParseError(format!("Invalid payload: {:?}", e)))
+        let msg_type = match Self::identify_recipient(recipient) {
+            Some(msg_type) => msg_type,
+            None => {
+                return Err(WebsocketClientError::ParseError(format!(
+                    "unknown feed type of {}",
+                    recipient
+                )))
+            }
+        };
+
+        Ok(msg_type)
     }
+
+    fn identify_recipient(recipient: &str) -> Option<Feed> {
+        if recipient.starts_with("orderbook.net") {
+            Some(Feed::NetOrderbook)
+        } else if recipient.starts_with("orderbook.sfox") {
+            Some(Feed::RawOrderbook)
+        } else if recipient.starts_with("ticker") {
+            Some(Feed::Ticker)
+        } else if recipient.starts_with("trades") {
+            Some(Feed::Trade)
+        } else if recipient.starts_with("private.user.balances") {
+            Some(Feed::Balances)
+        } else if recipient.starts_with("private.user.open-orders") {
+            Some(Feed::Orders)
+        } else if recipient.starts_with("private.user.post-trade-settlement") {
+            Some(Feed::PostTradeSettlement)
+        } else {
+            None
+        }
+    }
+
+    // pub fn parse_feed_message<T>(message: Message) -> Result<T, WebsocketClientError> {
+    //     let text = match message.to_text() {
+    //         Ok(text) => text,
+    //         Err(e) => {
+    //             return Err(WebsocketClientError::ParseError(format!(
+    //                 "Not a message with text: {}",
+    //                 e
+    //             )))
+    //         }
+    //     };
+
+    //     let value: Value = serde_json::from_str(text).map_err(|e| {
+    //         WebsocketClientError::ParseError(format!("Unable to parse to JSON: {}", e))
+    //     })?;
+
+    //     // let recipient = value
+    //     //     .get("recipient")
+    //     //     .and_then(Value::as_str)
+    //     //     .ok_or_else(|| {
+    //     //         WebsocketClientError::ParseError(format!("'recipient' key not found: {}", value))
+    //     //     })?;
+
+    //     serde_json::from_value::<WsResponse<WsMarket>>(value)
+    //         .map_err(|e| WebsocketClientError::ParseError(format!("Invalid payload: {:?}", e)))
+    // }
 }
 
 #[derive(Debug, Deserialize)]
@@ -181,38 +217,65 @@ mod tests {
     use tokio_tungstenite::tungstenite::Message;
 
     use crate::{
-        http::v1::order_book::OrderBook,
         util::fixtures,
-        websocket::{
-            message::{
-                market::{order_book::WsOrderBook, WsMarket},
-                WsResponse,
-            },
-            Client,
-        },
+        websocket::{message::Feed, Client},
     };
 
-    // #[tokio::test]
-    // async fn test_feed_message_type_err() {
-    //     let msg = Message::Text(fixtures::WS_SUBSCRIBE_RESPONSE.to_string());
-    //     let feed_msg_type = Client::feed_message_type(msg);
+    #[tokio::test]
+    async fn test_feed_message_type_err() {
+        let msg = Message::Text(fixtures::WS_SUBSCRIBE_RESPONSE.to_string());
+        let feed_msg_type = Client::feed_message_type(msg);
 
-    //     assert!(feed_msg_type.is_err());
-    // }
+        assert!(feed_msg_type.is_err());
+    }
 
-    // #[tokio::test]
-    // async fn test_feed_message_type_order() {
-    //     let msg = Message::Text(fixtures::WS_NET_ORDERBOOK_RESPONSE.to_string());
-    //     let feed_msg_type = Client::feed_message_type(msg).unwrap();
+    #[tokio::test]
+    async fn test_feed_message_type_orderbook() {
+        let msg = Message::Text(fixtures::WS_NET_ORDERBOOK_RESPONSE.to_string());
+        let feed_msg_type = Client::feed_message_type(msg).unwrap();
 
-    //     assert!(
-    //         feed_msg_type
-    //             == WsMarketResponsePayload::WsOrderBookResponsePayload(
-    //                 fixtures::WS_NET_ORDERBOOK_RESPONSE_PAYLOAD.clone()
-    //             )
-    //     );
-    // }
+        assert!(feed_msg_type == Feed::NetOrderbook);
+    }
 
+    #[tokio::test]
+    async fn test_feed_message_type_ticker() {
+        let msg = Message::Text(fixtures::WS_TICKER_RESPONSE.to_string());
+        let feed_msg_type = Client::feed_message_type(msg).unwrap();
+
+        assert!(feed_msg_type == Feed::Ticker);
+    }
+
+    #[tokio::test]
+    async fn test_feed_message_type_trade() {
+        let msg = Message::Text(fixtures::WS_TRADE_RESPONSE.to_string());
+        let feed_msg_type = Client::feed_message_type(msg).unwrap();
+
+        assert!(feed_msg_type == Feed::Trade);
+    }
+
+    #[tokio::test]
+    async fn test_feed_message_type_open_orders() {
+        let msg = Message::Text(fixtures::WS_OPEN_ORDERS_RESPONSE.to_string());
+        let feed_msg_type = Client::feed_message_type(msg).unwrap();
+
+        assert!(feed_msg_type == Feed::Orders);
+    }
+
+    #[tokio::test]
+    async fn test_feed_message_type_balances() {
+        let msg = Message::Text(fixtures::WS_BALANCES_RESPONSE.to_string());
+        let feed_msg_type = Client::feed_message_type(msg).unwrap();
+
+        assert!(feed_msg_type == Feed::Balances);
+    }
+
+    #[tokio::test]
+    async fn test_feed_message_type_post_trade_settlement() {
+        let msg = Message::Text(fixtures::WS_POST_TRADE_SETTLEMENT_RESPONSE.to_string());
+        let feed_msg_type = Client::feed_message_type(msg).unwrap();
+
+        assert!(feed_msg_type == Feed::PostTradeSettlement);
+    }
     // #[tokio::test]
     // async fn test_feed_message_type_ticker() {
     //     let msg = Message::Text(fixtures::WS_TICKER_RESPONSE.to_string());
@@ -230,16 +293,100 @@ mod tests {
     // }
 
     #[tokio::test]
-    async fn test_parse_feed_message() {
-        let msg = Message::Text(fixtures::WS_NET_ORDERBOOK_RESPONSE.to_string());
-        println!("MSG: {:?}", msg);
-        let feed_msg_type: WsResponse<OrderBook> = Client::parse_feed_message(msg).unwrap();
-        let ob: WsResponse<WsOrderBook> = feed_msg_type.try_into().unwrap();
-        //let ob = WsOrderBook::try_from(feed_msg_type.payload);
+    async fn test_serialize_balance() {
+        let balance_subscription =
+            fixtures::subscribe_msg("subscribe".into(), Feed::Balances, vec!["btcusd".into()]);
 
-        let expected: WsResponse<WsOrderBook> =
-            serde_json::from_str(fixtures::WS_NET_ORDERBOOK_RESPONSE.clone()).unwrap();
+        let msg = serde_json::to_string(&balance_subscription).unwrap();
 
-        assert!(ob == expected);
+        assert!(msg == "{\"type\":\"subscribe\",\"feeds\":[\"private.user.balances\"]}");
     }
+
+    #[tokio::test]
+    async fn test_serialize_open_orders() {
+        let balance_subscription =
+            fixtures::subscribe_msg("subscribe".into(), Feed::Orders, vec![]);
+
+        let msg = serde_json::to_string(&balance_subscription).unwrap();
+        assert!(msg == "{\"type\":\"subscribe\",\"feeds\":[\"private.user.open-orders\"]}");
+    }
+
+    #[tokio::test]
+    async fn test_serialize_net_orders() {
+        let balance_subscription = fixtures::subscribe_msg(
+            "subscribe".into(),
+            Feed::NetOrderbook,
+            vec!["btcusd".into(), "ethusd".into()],
+        );
+
+        let msg = serde_json::to_string(&balance_subscription).unwrap();
+        assert!(msg == "{\"type\":\"subscribe\",\"feeds\":[\"orderbook.net.btcusd\",\"orderbook.net.ethusd\"]}");
+    }
+
+    #[tokio::test]
+    async fn test_serialize_raw_orders() {
+        let balance_subscription = fixtures::subscribe_msg(
+            "subscribe".into(),
+            Feed::RawOrderbook,
+            vec!["btcusd".into(), "ethusd".into()],
+        );
+
+        let msg = serde_json::to_string(&balance_subscription).unwrap();
+        println!("{:?}", msg);
+        assert!(msg == "{\"type\":\"subscribe\",\"feeds\":[\"orderbook.sfox.btcusd\",\"orderbook.sfox.ethusd\"]}");
+    }
+
+    #[tokio::test]
+    async fn test_serialize_tickers() {
+        let balance_subscription = fixtures::subscribe_msg(
+            "subscribe".into(),
+            Feed::Ticker,
+            vec!["btcusd".into(), "ethusd".into()],
+        );
+
+        let msg = serde_json::to_string(&balance_subscription).unwrap();
+        println!("{:?}", msg);
+        assert!(msg == "{\"type\":\"subscribe\",\"feeds\":[\"ticker.sfox.btcusd\",\"ticker.sfox.ethusd\"]}");
+    }
+
+    #[tokio::test]
+    async fn test_serialize_trades() {
+        let balance_subscription = fixtures::subscribe_msg(
+            "subscribe".into(),
+            Feed::Trade,
+            vec!["btcusd".into(), "ethusd".into()],
+        );
+
+        let msg = serde_json::to_string(&balance_subscription).unwrap();
+        println!("{:?}", msg);
+        assert!(msg == "{\"type\":\"subscribe\",\"feeds\":[\"trades.sfox.btcusd\",\"trades.sfox.ethusd\"]}");
+    }
+
+    // #[tokio::test]
+    // async fn test_parse_feed_message() {
+    //     let msg = Message::Text(fixtures::WS_NET_ORDERBOOK_RESPONSE.to_string());
+    //     println!("MSG: {:?}", msg);
+    //     let feed_msg_type: WsResponse<WsMarket> = Client::parse_feed_message(msg).unwrap();
+    //     let ob: WsResponse<WsOrderBook> = feed_msg_type.try_into().unwrap();
+    //     //let ob = WsOrderBook::try_from(feed_msg_type.payload);
+
+    //     let expected: WsResponse<WsOrderBook> =
+    //         serde_json::from_str(fixtures::WS_NET_ORDERBOOK_RESPONSE.clone()).unwrap();
+
+    //     assert!(ob == expected);
+    // }
+
+    // #[tokio::test]
+    // async fn test_parse_ticker_feed_message() {
+    //     let msg = Message::Text(fixtures::WS_TICKER_RESPONSE.to_string());
+    //     println!("MSG: {:?}", msg);
+    //     let feed_msg_type: WsResponse<WsMarket> = Client::parse_feed_message(msg).unwrap();
+    //     let ob: WsResponse<WsTicker> = feed_msg_type.try_into().unwrap();
+    //     //let ob = WsOrderBook::try_from(feed_msg_type.payload);
+
+    //     let expected: WsResponse<WsTicker> =
+    //         serde_json::from_str(fixtures::WS_NET_ORDERBOOK_RESPONSE.clone()).unwrap();
+
+    //     assert!(ob == expected);
+    // }
 }
