@@ -8,7 +8,6 @@ use serde_derive::{Deserialize, Serialize};
 use serde_json::json;
 use thiserror::Error;
 
-/// Provides candlestick chart data.
 pub mod candlesticks;
 pub mod v1;
 
@@ -29,7 +28,6 @@ pub enum HttpError {
     UnparseableResponse(String, String),
 }
 
-///
 #[derive(Debug, Deserialize)]
 pub struct Client {
     #[serde(skip)]
@@ -149,6 +147,14 @@ impl Client {
             HttpVerb::Post | HttpVerb::Patch => req_body.is_some(),
         }
     }
+
+    fn url_for_candlestick_resource(&self, resource: &str) -> String {
+        format!("{}/candlesticks{}", self.candlestick_server_url, resource)
+    }
+
+    pub(crate) fn url_for_v1_resource(&self, resource: &str) -> String {
+        format!("{}/v1/{}", self.server_url, resource)
+    }
 }
 
 fn build_server(candlestick_server_url: String, server_url: String) -> Result<Client, HttpError> {
@@ -254,5 +260,42 @@ mod tests {
 
         // Assert error returned
         assert!(matches!(result, Err(HttpError::TransportError(_))));
+    }
+
+    #[test]
+    fn test_url_for_v1_resource() {
+        let _ = env::set_var("SFOX_AUTH_TOKEN", "secret");
+        let client = Client::new_with_server_url(
+            "https://api.example.com".to_string(),
+            "https://candlesticks.example.com".to_string(),
+        )
+        .unwrap();
+
+        let url = client.url_for_v1_resource("balances");
+        assert_eq!(url, "https://api.example.com/v1/balances");
+
+        let url = client.url_for_v1_resource("trades");
+        assert_eq!(url, "https://api.example.com/v1/trades");
+    }
+
+    #[test]
+    fn test_url_for_candlesticks_resource() {
+        let _ = env::set_var("SFOX_AUTH_TOKEN", "secret");
+
+        let candlestick_server_url = "https://candlesticks.example.com".to_string();
+
+        let client = Client::new_with_server_url(
+            "https://api.example.com".to_string(),
+            candlestick_server_url.clone(),
+        )
+        .unwrap();
+
+        let query_str = "?pair=btcusd&startTime=1000000&endTime=1000600&period=3600";
+
+        let url = client.url_for_candlestick_resource(query_str);
+        assert_eq!(
+            url,
+            format!("{}/candlesticks{}", candlestick_server_url, query_str)
+        );
     }
 }

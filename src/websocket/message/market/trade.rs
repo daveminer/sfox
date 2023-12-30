@@ -2,16 +2,16 @@ use serde_derive::Deserialize;
 
 use crate::websocket::message::WsResponse;
 
-pub type WsTradesResponse = WsResponse<WsTradesResponsePayload>;
+pub type WsTradesResponse = WsResponse<WsTrade>;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq)]
 pub enum TransactionSide {
     Buy,
     Sell,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct WsTradesResponsePayload {
+#[derive(Debug, Deserialize, PartialEq)]
+pub struct WsTrade {
     #[serde(rename = "buyOrderId")]
     pub buy_order_id: String,
     #[serde(rename = "sellOrderId")]

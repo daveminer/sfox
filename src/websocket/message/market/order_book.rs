@@ -2,10 +2,10 @@ use serde::Deserialize;
 
 use crate::websocket::message::WsResponse;
 
-pub type WsOrderBookResponse = WsResponse<WsOrderBookResponsePayload>;
+pub type WsOrderBookResponse = WsResponse<WsOrderBook>;
 
-#[derive(Debug, Deserialize)]
-pub struct WsOrderBookResponsePayload {
+#[derive(Debug, Deserialize, PartialEq)]
+pub struct WsOrderBook {
     pub asks: Vec<Order>,
     pub bids: Vec<Order>,
     pub lastpublished: usize,
@@ -14,13 +14,13 @@ pub struct WsOrderBookResponsePayload {
     pub pair: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq)]
 pub struct MarketMaking {
     pub asks: Vec<Order>,
     pub bids: Vec<Order>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq)]
 pub struct Order {
     pub price: f64,
     pub quantity: f64,

@@ -2,10 +2,10 @@ use serde_derive::Deserialize;
 
 use super::super::WsResponse;
 
-pub type WsTickerResponse = WsResponse<WsTickerResponsePayload>;
+pub type WsTickerResponse = WsResponse<WsTicker>;
 
-#[derive(Debug, Deserialize)]
-pub struct WsTickerResponsePayload {
+#[derive(Debug, Deserialize, PartialEq)]
+pub struct WsTicker {
     pub amount: f64,
     pub exchange: String,
     pub last: f64,

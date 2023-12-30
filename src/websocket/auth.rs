@@ -4,7 +4,7 @@ use serde_derive::Deserialize;
 use serde_json::{json, Error};
 use tokio_tungstenite::tungstenite::Message;
 
-use super::{message::WsSystemResponse, Client, WebsocketClientError};
+use super::{message::WsSystemResponse, Client, WebsocketClientError, WsSink};
 
 #[derive(Debug, Deserialize)]
 pub struct WsAuthResponsePayload {
@@ -13,13 +13,13 @@ pub struct WsAuthResponsePayload {
 
 impl Client {
     /// Authenticate a connected socket
-    pub async fn authenticate(&self) -> Result<(), WebsocketClientError> {
+    pub async fn authenticate(&self, write: &mut WsSink) -> Result<(), WebsocketClientError> {
         let msg = match auth_message() {
             Ok(msg) => msg,
             Err(e) => return Err(WebsocketClientError::AuthenticationError(e.to_string())),
         };
 
-        match self.send(msg).await {
+        match Self::send(write, msg).await {
             Ok(_) => Ok(()),
             Err(e) => Err(WebsocketClientError::AuthenticationError(e.to_string())),
         }
@@ -29,7 +29,8 @@ impl Client {
     pub fn auth_message_check_success(msg: &str) -> Result<bool, Error> {
         let auth_response: WsSystemResponse<WsAuthResponsePayload> = serde_json::from_str(msg)?;
 
-        Ok(auth_response.msg_type == "success" && auth_response.payload.action == "authenticate")
+        Ok(auth_response.message_type == "success"
+            && auth_response.payload.action == "authenticate")
     }
 }
 
