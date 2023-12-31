@@ -4,7 +4,7 @@ pub static OPEN_ORDER_FEED: &str = "private.user.open-orders";
 
 #[derive(Debug, Deserialize)]
 pub struct OrderPayload {
-    pub id: String,
+    pub id: usize,
     pub client_order_id: String,
     pub status: String,
     pub filled: String,
