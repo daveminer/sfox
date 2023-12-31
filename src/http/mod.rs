@@ -218,7 +218,7 @@ mod tests {
         let client = Client::new().unwrap();
 
         // Assert auth token was set correctly
-        assert_eq!(client.auth_token, "abc123");
+        assert_eq!(client.auth_token, "secret");
         assert_eq!(client.server_url, DEFAULT_SERVER_URL);
     }
 
