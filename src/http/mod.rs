@@ -207,7 +207,6 @@ where
 
 #[cfg(test)]
 mod tests {
-    use serde_json::Value;
     use tokio_tungstenite::tungstenite::http;
 
     use crate::http::{parse_response, Client, HttpError, DEFAULT_SERVER_URL};
@@ -215,7 +214,7 @@ mod tests {
 
     #[test]
     fn test_client_initialization() {
-        let _ = env::set_var("SFOX_AUTH_TOKEN", "abc123");
+        let _ = env::set_var("SFOX_AUTH_TOKEN", "secret");
         let client = Client::new().unwrap();
 
         // Assert auth token was set correctly
@@ -225,7 +224,7 @@ mod tests {
 
     #[test]
     fn test_client_initialization_with_url() {
-        let _ = env::set_var("SFOX_AUTH_TOKEN", "abc123");
+        let _ = env::set_var("SFOX_AUTH_TOKEN", "secret");
         let server_url = "http://localhost:4000".to_string();
         let candlestick_server_url = "http://localhost:4001".to_string();
 

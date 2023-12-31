@@ -39,7 +39,7 @@ pub async fn new_test_server_and_client(
 }
 
 pub async fn start_test_http_server(api_mocks: Vec<ApiMock>) -> (mockito::ServerGuard, Vec<Mock>) {
-    let _ = env::set_var("SFOX_AUTH_TOKEN", "abc123");
+    let _ = env::set_var("SFOX_AUTH_TOKEN", "secret");
 
     let mut s = mockito::Server::new_async().await;
 
