@@ -57,7 +57,7 @@ pub struct WsSystemResponse<T> {
 ///
 /// # Example
 /// ```
-/// use sfox::websocket::{FeedType, message::SubscribeMsg};
+/// use sfox::websocket::{message::Feed, message::SubscribeMsg};
 ///
 /// let order_msg = SubscribeMsg {
 ///     action: "subscribe".to_string(),
@@ -66,7 +66,7 @@ pub struct WsSystemResponse<T> {
 /// };
 /// assert_eq!(
 ///     serde_json::to_string(&order_msg).unwrap(),
-///     "{\"action\":\"subscribe\",\"type\":\"RawOrderbook\",\"feeds\":[\"orderbook.sfox.btcusd\"]}"
+///     "{\"type\":\"subscribe\",\"feeds\":[\"orderbook.sfox.btcusd\"]}"
 /// );
 /// ```
 ///

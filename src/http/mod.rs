@@ -207,7 +207,8 @@ where
 
 #[cfg(test)]
 mod tests {
-    use tokio_tungstenite::tungstenite::http::Response;
+    use serde_json::Value;
+    use tokio_tungstenite::tungstenite::http;
 
     use crate::http::{parse_response, Client, HttpError, DEFAULT_SERVER_URL};
     use std::env;
@@ -237,9 +238,10 @@ mod tests {
     #[tokio::test]
     async fn test_parse_response_success() {
         // Create mock response
-        let resp = Response::builder()
+        let resp = http::Response::builder()
             .status(200)
-            .body("\"response body\"")
+            // Will not deserialize correctly without quotes
+            .body("\"response body\"".to_string())
             .unwrap();
 
         let parsed: String = parse_response(resp.into()).await.unwrap();
@@ -249,10 +251,10 @@ mod tests {
     #[tokio::test]
     async fn test_parse_response_transport_error() {
         // Create a failed response
-        let resp = Response::builder()
+        let resp = http::Response::builder()
             .status(400)
             // Will not deserialize correctly without quotes
-            .body("response body")
+            .body("\"response body\"")
             .unwrap();
 
         // Try to parse failed response
