@@ -209,12 +209,14 @@ where
 mod tests {
     use tokio_tungstenite::tungstenite::http;
 
-    use crate::http::{parse_response, Client, HttpError, DEFAULT_SERVER_URL};
-    use std::env;
+    use crate::{
+        http::{parse_response, Client, HttpError, DEFAULT_SERVER_URL},
+        util::set_test_env,
+    };
 
     #[test]
     fn test_client_initialization() {
-        let _ = env::set_var("SFOX_AUTH_TOKEN", "secret");
+        set_test_env();
         let client = Client::new().unwrap();
 
         // Assert auth token was set correctly
@@ -224,7 +226,7 @@ mod tests {
 
     #[test]
     fn test_client_initialization_with_url() {
-        let _ = env::set_var("SFOX_AUTH_TOKEN", "secret");
+        set_test_env();
         let server_url = "http://localhost:4000".to_string();
         let candlestick_server_url = "http://localhost:4001".to_string();
 
@@ -265,7 +267,7 @@ mod tests {
 
     #[test]
     fn test_url_for_v1_resource() {
-        let _ = env::set_var("SFOX_AUTH_TOKEN", "secret");
+        set_test_env();
         let client = Client::new_with_server_url(
             "https://api.example.com".to_string(),
             "https://candlesticks.example.com".to_string(),
@@ -281,7 +283,7 @@ mod tests {
 
     #[test]
     fn test_url_for_candlesticks_resource() {
-        let _ = env::set_var("SFOX_AUTH_TOKEN", "secret");
+        set_test_env();
 
         let candlestick_server_url = "https://candlesticks.example.com".to_string();
 
