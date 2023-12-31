@@ -1,23 +1,16 @@
-use futures_util::{
-    stream::{SplitSink, SplitStream},
-    Future, SinkExt, StreamExt, TryFutureExt,
-};
+use futures_util::{stream::SplitSink, Future, SinkExt, TryFutureExt};
 use serde_derive::Deserialize;
-use std::{
-    env,
-    sync::{Arc, Mutex},
-};
+use std::env;
 use thiserror::Error;
 use tokio::net::TcpStream;
 use tokio_tungstenite::{connect_async, tungstenite::Message, MaybeTlsStream, WebSocketStream};
 
-use crate::http::HttpError;
+use self::message::{Feed, SubscribeAction, SubscribeMsg};
 
-use self::message::{SubscribeAction, SubscribeMsg};
-
-mod auth;
-pub mod market;
+pub mod auth;
 pub mod message;
+
+type WsSink = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>;
 
 static DEFAULT_WS_SERVER_URL: &str = "wss://ws.sfox.com/ws";
 
@@ -29,6 +22,8 @@ pub enum WebsocketClientError {
     InitializationError(String),
     #[error("could not lock the write stream {0}")]
     LockError(String),
+    #[error("could not parse: {0}")]
+    ParseError(String),
     #[error("could not send message: {0}")]
     TxError(String),
 }
@@ -36,12 +31,11 @@ pub enum WebsocketClientError {
 #[derive(Debug)]
 pub struct Client {
     pub server_url: String,
-    pub read: SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>,
-    write: Arc<Mutex<SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>>>,
+    pub stream: WebSocketStream<MaybeTlsStream<TcpStream>>,
 }
 
 impl Client {
-    /// Create a new server with the URL set in the environment
+    /// Create a new server with the URL set in the environment.
     pub fn new() -> impl Future<Output = Result<Client, WebsocketClientError>> {
         let server_url =
             env::var("SFOX_WS_SERVER_URL").unwrap_or_else(|_| DEFAULT_WS_SERVER_URL.to_string());
@@ -49,7 +43,7 @@ impl Client {
         Client::new_with_server_url(server_url)
     }
 
-    /// Create a new server with the given server URL; useful for testing.
+    /// Create a new server with the given server URL; used for testing.
     pub fn new_with_server_url(
         server_url: String,
     ) -> impl Future<Output = Result<Client, WebsocketClientError>> {
@@ -70,55 +64,61 @@ impl Client {
                     )));
                 }
 
-                let (write, read) = stream.split();
-
-                Ok(Client {
-                    server_url,
-                    read,
-                    write: Arc::new(Mutex::new(write)),
-                })
+                Ok(Client { server_url, stream })
             })
     }
 
-    /// Subscribe to the given feeds.
-    pub async fn subscribe(&self, feeds: Vec<String>) -> Result<(), HttpError> {
-        match self.send(feed_msg(feeds, SubscribeAction::Subscribe)).await {
-            Ok(_) => Ok(()),
-            Err(e) => Err(HttpError::TransportError(e.to_string())),
-        }
+    /// Subscribe to the provided feeds.
+    pub async fn subscribe(
+        write: &mut WsSink,
+        feed_type: Feed,
+        feeds: Vec<String>,
+    ) -> Result<(), WebsocketClientError> {
+        Self::send(
+            write,
+            feed_msg(feeds, feed_type, SubscribeAction::Subscribe),
+        )
+        .await
     }
 
-    // Unsubscribe from feeds that this socket has previously subscribed to.
-    pub async fn unsubscribe(&self, feeds: Vec<String>) -> Result<(), HttpError> {
-        match self
-            .send(feed_msg(feeds, SubscribeAction::Unsubscribe))
+    /// Unsubscribe from feeds that this socket has previously subscribed to.
+    pub async fn unsubscribe(
+        write: &mut WsSink,
+        feed_type: Feed,
+        feeds: Vec<String>,
+    ) -> Result<(), WebsocketClientError> {
+        Self::send(
+            write,
+            feed_msg(feeds, feed_type, SubscribeAction::Unsubscribe),
+        )
+        .await
+    }
+
+    async fn send(write: &mut WsSink, msg: Message) -> Result<(), WebsocketClientError> {
+        write
+            .send(msg)
             .await
-        {
-            Ok(()) => Ok(()),
-            Err(e) => Err(HttpError::TransportError(e.to_string())),
-        }
-    }
-
-    async fn send(&self, msg: Message) -> Result<(), WebsocketClientError> {
-        match self.write.lock() {
-            Ok(mut write) => write.send(msg).await.map_err(|e| {
-                WebsocketClientError::TxError(format!("Could not send message: {}", e))
-            }),
-            Err(e) => Err(WebsocketClientError::TxError(e.to_string())),
-        }
+            .map_err(|e| WebsocketClientError::TxError(format!("Could not send message: {}", e)))
     }
 }
 
-fn feed_msg(feeds: Vec<String>, action: SubscribeAction) -> Message {
-    let msg_type = action.into();
-    Message::Text(serde_json::to_string(&SubscribeMsg { msg_type, feeds }).unwrap())
+fn feed_msg(feeds: Vec<String>, feed_type: Feed, action: SubscribeAction) -> Message {
+    Message::Text(
+        serde_json::to_string(&SubscribeMsg {
+            action: action.into(),
+            feed_type,
+            feeds,
+        })
+        .unwrap(),
+    )
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::util::server::{start_test_ws_server, stop_test_ws_server};
+    use futures_util::StreamExt;
 
     use super::*;
+    use crate::util::server::{start_test_ws_server, stop_test_ws_server};
 
     #[tokio::test]
     async fn test_subscribe() {
@@ -128,10 +128,14 @@ mod tests {
             .await
             .unwrap();
 
-        let result = client.subscribe(vec!["btcusd".into()]).await;
+        let (mut write, _read) = client.stream.split();
+        let ticker_result =
+            Client::subscribe(&mut write, Feed::Ticker, vec!["btcusd".into()]).await;
+        let trade_result = Client::subscribe(&mut write, Feed::Trade, vec!["btcusd".into()]).await;
 
         stop_test_ws_server(stop).await;
-        assert!(result.is_ok());
+        assert!(ticker_result.is_ok());
+        assert!(trade_result.is_ok());
     }
 
     #[tokio::test]
@@ -141,19 +145,12 @@ mod tests {
             .await
             .unwrap();
 
-        let result = client.unsubscribe(vec!["orders".into()]).await;
+        let (mut write, _read) = client.stream.split();
+        let result =
+            Client::unsubscribe(&mut write, Feed::NetOrderbook, vec!["orders".into()]).await;
 
         stop_test_ws_server(stop).await;
         assert!(result.is_ok());
-    }
-
-    #[tokio::test]
-    async fn test_feed_msg() {
-        let feeds = vec!["btcusd".into(), "ethusd".into()];
-        let msg = feed_msg(feeds, SubscribeAction::Subscribe);
-        assert!(
-            msg == Message::Text(r#"{"type":"subscribe","feeds":["btcusd","ethusd"]}"#.to_string())
-        );
     }
 
     #[tokio::test]

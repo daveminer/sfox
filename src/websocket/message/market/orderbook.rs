@@ -1,11 +1,7 @@
 use serde::Deserialize;
 
-use crate::websocket::message::WsResponse;
-
-pub type WsOrderBookResponse = WsResponse<WsOrderBookResponsePayload>;
-
-#[derive(Debug, Deserialize)]
-pub struct WsOrderBookResponsePayload {
+#[derive(Debug, Deserialize, PartialEq)]
+pub struct Orderbook {
     pub asks: Vec<Order>,
     pub bids: Vec<Order>,
     pub lastpublished: usize,
@@ -14,17 +10,28 @@ pub struct WsOrderBookResponsePayload {
     pub pair: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq)]
 pub struct MarketMaking {
     pub asks: Vec<Order>,
     pub bids: Vec<Order>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[serde(from = "(f64, f64, String)")]
 pub struct Order {
     pub price: f64,
     pub quantity: f64,
     pub source: String,
+}
+
+impl From<(f64, f64, String)> for Order {
+    fn from(data: (f64, f64, String)) -> Self {
+        Order {
+            price: data.0,
+            quantity: data.1,
+            source: data.2,
+        }
+    }
 }
 
 pub enum BookType {
