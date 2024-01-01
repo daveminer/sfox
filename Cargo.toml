@@ -1,16 +1,7 @@
 [package]
 authors = ["Dave Miner <dave@halyard.systems>"]
 description = "Unofficial HTTP and Websocket Client for the SFox API"
-keywords = [
-  "api",
-  "crypto",
-  "cryptocurrency",
-  "finance",
-  "http",
-  "sfox",
-  "trading",
-  "websocket",
-]
+keywords = ["crypto", "finance", "http", "trading", "websocket"]
 license = "MIT"
 name = "sfox"
 repository = "https://github.com/daveminer/sfox"
