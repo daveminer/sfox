@@ -1,11 +1,20 @@
 [package]
 authors = ["Dave Miner <dave@halyard.systems>"]
 description = "Unofficial HTTP and Websocket Client for the SFox API"
-keywords = ["crytocurrency", "finance", "sfox", "trading"]
+keywords = [
+  "api",
+  "crypto",
+  "cryptocurrency",
+  "finance",
+  "http",
+  "sfox",
+  "trading",
+  "websocket",
+]
 license = "MIT"
 name = "sfox"
 repository = "https://github.com/daveminer/sfox"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
