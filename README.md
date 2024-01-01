@@ -58,22 +58,23 @@ Usage of the WebSocket client includes instantiating the client, authenticating 
 and subscribing/unsubscribing to feeds.
 
 ```
-  use sfox::websocket::Client;
+use sfox::websocket::Client;
+```
+```
+let sfox_ws = Client::new().await?;
+let (mut write, mut read) = sfox_ws.stream.split();
 
-  let sfox_ws = Client::new().await?;
-  let (mut write, mut read) = sfox_ws.stream.split();
+// Start a task to read messages from the SFox stream
+let _sfox_handle = tokio::spawn(async move { handle_incoming_message(&mut read).await });
 
-  // Start a task to read messages from the SFox stream
-  let _sfox_handle = tokio::spawn(async move { handle_incoming_message(&mut read).await });
+// Subscribe to a feed on the websocket server
+let _ticker_subscription = Client::subscribe(&mut write, Feed::Ticker, vec!["btcusd".to_string()]).await;
 
-  // Subscribe to a feed on the websocket server
-  let _ticker_subscription = Client::subscribe(&mut write, Feed::Ticker, vec!["btcusd".to_string()]).await;
+// Authenticate to access private feeds
+let _authentication_attempt = Client::authenticate(&mut write).await;
 
-  // Authenticate in order to access private feeds
-  let _authentication_attempt = Client::authenticate(&mut write).await;
-
-  // Subscribe to a private feed
-  let _balance_subscription = Client::subscribe(&mut write, Feed::Balances, vec![]).await;
+// Subscribe to a private feed
+let _balance_subscription = Client::subscribe(&mut write, Feed::Balances, vec![]).await;
 ```
 
 where `handle_incoming_message` could be implemented like:
