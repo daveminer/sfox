@@ -1,5 +1,6 @@
 use std::env::{self, VarError};
 
+use futures_util::SinkExt;
 use serde_derive::Deserialize;
 use serde_json::{json, Error};
 use tokio_tungstenite::tungstenite::Message;
@@ -13,19 +14,20 @@ pub struct WsAuthResponsePayload {
 
 impl Client {
     /// Authenticate a connected socket
-    pub async fn authenticate(&self, write: &mut WsSink) -> Result<(), WebsocketClientError> {
+    pub async fn authenticate(write: &mut WsSink) -> Result<(), WebsocketClientError> {
         let msg = match auth_message() {
             Ok(msg) => msg,
             Err(e) => return Err(WebsocketClientError::AuthenticationError(e.to_string())),
         };
 
-        match Self::send(write, msg).await {
-            Ok(_) => Ok(()),
-            Err(e) => Err(WebsocketClientError::AuthenticationError(e.to_string())),
-        }
+        let result = write.send(msg).await.map_err(|e| {
+            WebsocketClientError::AuthenticationError(format!("Could not send message: {}", e))
+        })?;
+
+        Ok(result)
     }
 
-    // Validates a message as a successful response to the message sent by authenticate()
+    /// Validates a message as a successful response to the message sent by authenticate()
     pub fn auth_message_check_success(msg: &str) -> Result<bool, Error> {
         let auth_response: WsSystemResponse<WsAuthResponsePayload> = serde_json::from_str(msg)?;
 

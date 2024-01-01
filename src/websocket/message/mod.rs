@@ -12,7 +12,9 @@ use self::market::trade::Trade;
 
 use super::{Client, WebsocketClientError};
 
+/// Types and subscription builders for balances, orders, and post-trade settlement.
 pub mod account;
+/// Types and subscription builders for orderbook, ticker, and trade.
 pub mod market;
 
 pub type BalancesResponse = WsResponse<Vec<BalancePayload>>;
@@ -34,6 +36,7 @@ pub enum Feed {
     Trade,
 }
 
+/// The outer shape of a message received from an active subscription.
 #[derive(Debug, Deserialize, PartialEq)]
 pub struct WsResponse<T> {
     pub recipient: String,
@@ -42,6 +45,7 @@ pub struct WsResponse<T> {
     pub timestamp: usize,
 }
 
+/// Response to a system-related websocket message.
 #[derive(Debug, Deserialize)]
 pub struct WsSystemResponse<T> {
     #[serde(rename = "type")]
@@ -114,6 +118,8 @@ impl Serialize for SubscribeMsg {
 }
 
 impl Client {
+    /// Given a websocket message, determine the type of feed it is. This can be
+    /// used for deserialization in a message handler.
     pub fn feed_message_type(message: Message) -> Result<Feed, WebsocketClientError> {
         let message = match message.to_text() {
             Ok(message) => message,
@@ -178,12 +184,7 @@ impl Client {
     }
 }
 
-#[derive(Debug, Deserialize)]
-pub struct WsSubscriptionResponsePayload {
-    pub action: String,
-    pub feeds: Vec<String>,
-}
-
+/// Subscribe / Unsubscribe
 pub enum SubscribeAction {
     Subscribe,
     Unsubscribe,

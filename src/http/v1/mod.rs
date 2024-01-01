@@ -5,21 +5,36 @@ use serde::{
 
 use super::Client;
 
+/// Access user account balance.
 pub mod account_balance;
+/// Request an ACH transfer.
 pub mod ach_bank_transfer;
+/// View and create addresses for depositing cryptocurrencies.
 pub mod crypto_deposit_address;
+/// Currency and currency pair information.
 pub mod currency;
+/// Custody and approval management.
 pub mod custody;
-pub mod estimate;
+/// Fee information, including withdrawal fees.
 pub mod fee;
+/// Order management actions and information.
 pub mod order;
+/// Order book data.
 pub mod order_book;
+/// If enabled, post-trade settlement features are available here including position, settlement,
+/// and risk information.
 pub mod post_trade_settlement;
+/// Request for a quote to trade with SFox at a predetermined price.
 pub mod quote;
+/// Reporting on transactions, orders, and monthly summary.
 pub mod report;
+/// Manage short positions, settlement, and portfolio risk.
 pub mod short;
+/// Staking information and actions.
 pub mod staking;
+/// Volume information, total and per-exchange.
 pub mod volume;
+/// Request withdrawal of funds.
 pub mod withdraw;
 
 pub(crate) fn bool_from_int<'de, D>(deserializer: D) -> Result<bool, D::Error>

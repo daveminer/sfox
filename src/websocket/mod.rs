@@ -7,7 +7,10 @@ use tokio_tungstenite::{connect_async, tungstenite::Message, MaybeTlsStream, Web
 
 use self::message::{Feed, SubscribeAction, SubscribeMsg};
 
+/// Handles authentication and response with the websocket server.
 pub mod auth;
+/// This module contains methods for subscribing/unsubscribing to feeds and determining
+/// received message type. It also contains types for deserializing received messages.
 pub mod message;
 
 type WsSink = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>;
@@ -28,6 +31,11 @@ pub enum WebsocketClientError {
     TxError(String),
 }
 
+/// The client starts and maintains instance provides methods for
+/// subscribing/unsubscribing to feeds. To receive, it exposes a
+/// tokio_tungsenite::WebSocketStream to the user for custom message handling.
+/// Types for deserializing received messages are provided for use in
+/// these message handlers.
 #[derive(Debug)]
 pub struct Client {
     pub server_url: String,

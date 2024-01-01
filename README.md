@@ -39,9 +39,9 @@ The ```sfox::http``` module performs asynchronous calls to the SFox API and retu
 
 ```
 use sfox::http::{self, v1::order_book::OrderBook};
+```
 
-...
-
+```
 let sfox = http::new().unwrap();
 let order_book: OrderBook = sfox.order_book("btcusd").await.unwrap();
 println!("Order book currency: {:?}", order_book.bids[0]);
@@ -54,8 +54,36 @@ Order book currency: OpenOrder { price: 35000.012, volume: 1.0, exchange: "some-
 
 #### Websocket
 
-_In Development_
+Usage of the WebSocket client includes instantiating the client, authenticating with the server,
+and subscribing/unsubscribing to feeds.
 
+```
+  use sfox::websocket::Client;
+
+  let sfox_ws = Client::new().await?;
+  let (mut write, mut read) = sfox_ws.stream.split();
+
+  // Start a task to read messages from the SFox stream
+  let _sfox_handle = tokio::spawn(async move { handle_incoming_message(&mut read).await });
+
+  // Subscribe to a feed on the websocket server
+  let _ticker_subscription = Client::subscribe(&mut write, Feed::Ticker, vec!["btcusd".to_string()]).await;
+
+  // Authenticate in order to access private feeds
+  let _authentication_attempt = Client::authenticate(&mut write).await;
+
+  // Subscribe to a private feed
+  let _balance_subscription = Client::subscribe(&mut write, Feed::Balances, vec![]).await;
+```
+
+where `handle_incoming_message` could be implemented like:
+```
+async fn handle_incoming_message(read: &mut SplitStream<WssStream> ) {
+    while let Some(message) = read.next().await {
+        println!("Received message: {:?}", message);
+    }
+}
+```
 
 ## Minimum Supported Rust Version (MSRV)
 

@@ -8,12 +8,17 @@ use serde_derive::{Deserialize, Serialize};
 use serde_json::json;
 use thiserror::Error;
 
+/// Candlestick chart data from the SFox markets.
 pub mod candlesticks;
+/// Core API resources.
 pub mod v1;
 
+/// Server URL for candlestick chart data.
 pub const DEFAULT_SERVER_URL: &str = "https://api.sfox.com";
+/// URL for core API.
 pub const CANDLESTICK_SERVER_URL: &str = "https://chartdata.sfox.com";
 
+/// Error type for HTTP requests.
 #[derive(Clone, Error, Debug, Deserialize)]
 pub enum HttpError {
     #[error("Authentication error: `{0}`")]
@@ -28,6 +33,8 @@ pub enum HttpError {
     UnparseableResponse(String, String),
 }
 
+/// Offers an asynchronous API that models the HTTP resources of the SFox API. Server and authentication are
+/// managed internally.
 #[derive(Debug, Deserialize)]
 pub struct Client {
     #[serde(skip)]
@@ -38,6 +45,7 @@ pub struct Client {
     pub server_url: String,
 }
 
+/// GET, POST, PATCH, DELETE
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum HttpVerb {
     Get,

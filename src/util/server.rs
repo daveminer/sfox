@@ -38,6 +38,7 @@ pub async fn new_test_server_and_client(
     )
 }
 
+/// Start a test server configured with the provided mock.
 pub async fn start_test_http_server(api_mocks: Vec<ApiMock>) -> (mockito::ServerGuard, Vec<Mock>) {
     let _ = env::set_var("SFOX_AUTH_TOKEN", "secret");
 
@@ -61,6 +62,7 @@ pub async fn start_test_http_server(api_mocks: Vec<ApiMock>) -> (mockito::Server
     (s, mocks)
 }
 
+/// Start a server for testing websocket functionality.
 pub async fn start_test_ws_server() -> (Arc<AtomicBool>, SocketAddr, tokio::task::JoinHandle<()>) {
     // Create an Arc<AtomicBool> to share between the two threads.
     let stop = Arc::new(AtomicBool::new(false));
@@ -81,10 +83,12 @@ pub async fn start_test_ws_server() -> (Arc<AtomicBool>, SocketAddr, tokio::task
     return (stop, addr, listener_task);
 }
 
+/// Stop the websocket test server.
 pub async fn stop_test_ws_server(stop: Arc<AtomicBool>) {
     stop.store(true, Ordering::Relaxed);
 }
 
+/// Accept a connection and echo messages back to the client.
 async fn accept_connection(stream: TcpStream) {
     let callback = |_req: &Request, response: Response| Ok(response);
     let mut ws_stream = accept_hdr_async(stream, callback)
