@@ -1,3 +1,5 @@
+# Web Client for SFox.com API
+
 [![CI](https://github.com/daveminer/sfox/actions/workflows/test.yml/badge.svg)](https://github.com/daveminer/sfox/actions/workflows/test.yml)
 
 
@@ -5,8 +7,7 @@
 `sfox` provides typed, asynchronous wrappers around the [SFox.com API](https://docs.sfox.com/) HTTP calls
 as well as [Serde](https://serde.rs/) types for websocket message deserialization.
 
-_Note: FIX is not implemented at this time._
-
+_FIX is not implemented at this time._
 
 ## Installation
 
@@ -105,5 +106,3 @@ If you have a suggestion that would make this better, please fork the repo and c
 ## License
 
 Distributed under the MIT License. See `LICENSE.txt` for more information.
-
-<script src="https://kit.fontawesome.com/9caa0d72be.js" crossorigin="anonymous"></script>
