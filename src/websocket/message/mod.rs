@@ -32,6 +32,7 @@ pub enum Feed {
     PostTradeSettlement,
     NetOrderbook,
     RawOrderbook,
+    System,
     Ticker,
     Trade,
 }
@@ -93,6 +94,7 @@ impl Serialize for SubscribeMsg {
             Feed::Orders => "private.user.open-orders",
             Feed::PostTradeSettlement => "private.user.post-trade-settlement",
             Feed::RawOrderbook => "orderbook.sfox",
+            Feed::System => "system",
             Feed::Ticker => "ticker.sfox",
             Feed::Trade => "trades.sfox",
         };
@@ -143,11 +145,14 @@ impl Client {
 
         let recipient = match msg_json.get("recipient").and_then(Value::as_str) {
             Some(recipient) => recipient,
-            None => {
-                return Err(WebsocketClientError::ParseError(
-                    "could not find 'type' key in message".to_string(),
-                ))
-            }
+            None => match msg_json.get("type").and_then(Value::as_str) {
+                Some(_msg_type) => return Ok(Feed::System),
+                None => {
+                    return Err(WebsocketClientError::ParseError(
+                        "could not find a matching key in message".to_string(),
+                    ))
+                }
+            },
         };
 
         let msg_type = match Self::identify_recipient(recipient) {
@@ -216,10 +221,18 @@ mod tests {
 
     #[tokio::test]
     async fn test_feed_message_type_err() {
-        let msg = Message::Text(fixtures::SUBSCRIBE_PAYLOAD.to_string());
+        let msg = Message::Text("{}".to_string());
         let feed_msg_type = Client::feed_message_type(msg);
 
         assert!(feed_msg_type.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_feed_message_type_system() {
+        let msg = Message::Text(fixtures::SUBSCRIBE_PAYLOAD.to_string());
+        let feed_msg_type = Client::feed_message_type(msg).unwrap();
+
+        assert!(feed_msg_type == Feed::System);
     }
 
     #[tokio::test]
