@@ -221,10 +221,18 @@ mod tests {
 
     #[tokio::test]
     async fn test_feed_message_type_err() {
-        let msg = Message::Text(fixtures::SUBSCRIBE_PAYLOAD.to_string());
+        let msg = Message::Text("{}".to_string());
         let feed_msg_type = Client::feed_message_type(msg);
 
         assert!(feed_msg_type.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_feed_message_type_system() {
+        let msg = Message::Text(fixtures::SUBSCRIBE_PAYLOAD.to_string());
+        let feed_msg_type = Client::feed_message_type(msg).unwrap();
+
+        assert!(feed_msg_type == Feed::System);
     }
 
     #[tokio::test]
