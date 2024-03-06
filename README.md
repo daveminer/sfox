@@ -7,7 +7,7 @@
 `sfox` provides typed, asynchronous wrappers around the [SFox.com API](https://docs.sfox.com/) HTTP calls
 as well as [Serde](https://serde.rs/) types for websocket message deserialization.
 
-_FIX is not implemented at this time._
+_FIX is not implemented._
 
 ## Installation
 
