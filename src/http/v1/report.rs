@@ -60,21 +60,21 @@ impl Client {
         let query_str = self.url_for_v1_resource(TRANSACTION_HISTORY_RESOURCE);
 
         let mut params = HashMap::new();
-        if from.is_some() {
-            params.insert("from".to_string(), from.unwrap());
+        if let Some(from) = from {
+            params.insert("from".to_string(), from);
         }
-        if to.is_some() {
-            params.insert("to".to_string(), to.unwrap());
+        if let Some(to) = to {
+            params.insert("to".to_string(), to);
         }
-        if limit.is_some() {
-            params.insert("limit".to_string(), limit.unwrap().to_string());
+        if let Some(limit) = limit {
+            params.insert("limit".to_string(), limit.to_string());
         }
 
-        if offset.is_some() {
-            params.insert("offset".to_string(), offset.unwrap().to_string());
+        if let Some(offset) = offset {
+            params.insert("offset".to_string(), offset.to_string());
         }
-        if types.is_some() {
-            params.insert("types".to_string(), types.unwrap());
+        if let Some(types) = types {
+            params.insert("types".to_string(), types);
         }
 
         self.request(HttpVerb::Get, &query_str, None)

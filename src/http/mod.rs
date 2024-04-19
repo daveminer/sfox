@@ -54,9 +54,9 @@ pub enum HttpVerb {
     Delete,
 }
 
-impl Into<&str> for HttpVerb {
-    fn into(self) -> &'static str {
-        match self {
+impl From<HttpVerb> for &str {
+    fn from(val: HttpVerb) -> Self {
+        match val {
             HttpVerb::Get => "GET",
             HttpVerb::Post => "POST",
             HttpVerb::Patch => "PATCH",

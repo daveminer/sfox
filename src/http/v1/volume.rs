@@ -70,7 +70,7 @@ impl<'de> Deserialize<'de> for VolumeRecord {
 
         let first_data_elem = match data.as_array() {
             Some(data) => {
-                if data.len() == 0 {
+                if data.is_empty() {
                     return Err(serde::de::Error::custom(
                         "Empty 'data' field in VolumeRecord",
                     ));

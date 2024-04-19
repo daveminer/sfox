@@ -95,7 +95,7 @@ impl Client {
     pub fn cancel_all_orders(
         self,
     ) -> impl Future<Output = Result<CancelledOrderResponse, HttpError>> {
-        let url = self.url_for_v1_resource(&format!("{}", OPEN_ORDERS_RESOURCE));
+        let url = self.url_for_v1_resource(OPEN_ORDERS_RESOURCE);
         self.request(HttpVerb::Delete, &url, None)
     }
 
@@ -127,7 +127,7 @@ impl Client {
     }
 
     pub fn open_orders(self) -> impl Future<Output = Result<Vec<Order>, HttpError>> {
-        let url = self.url_for_v1_resource(&format!("{}", ORDERS_RESOURCE));
+        let url = self.url_for_v1_resource(ORDERS_RESOURCE);
         self.request(HttpVerb::Get, &url, None)
     }
 

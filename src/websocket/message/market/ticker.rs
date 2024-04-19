@@ -1,6 +1,7 @@
+use serde::Serialize;
 use serde_derive::Deserialize;
 
-#[derive(Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct Ticker {
     pub amount: f64,
     pub exchange: String,

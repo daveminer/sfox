@@ -52,6 +52,7 @@ Order book currency: OpenOrder { price: 35000.012, volume: 1.0, exchange: "some-
 
 #### Websocket
 
+
 Usage of the WebSocket client includes instantiating the client, authenticating with the server,
 and subscribing/unsubscribing to feeds.
 

@@ -20,11 +20,11 @@ impl Client {
             Err(e) => return Err(WebsocketClientError::AuthenticationError(e.to_string())),
         };
 
-        let result = write.send(msg).await.map_err(|e| {
+        write.send(msg).await.map_err(|e| {
             WebsocketClientError::AuthenticationError(format!("Could not send message: {}", e))
         })?;
 
-        Ok(result)
+        Ok(())
     }
 
     /// Validates a message as a successful response to the message sent by authenticate()

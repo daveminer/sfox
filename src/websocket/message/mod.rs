@@ -1,3 +1,5 @@
+use serde::de::value::Error;
+use serde::de::{DeserializeOwned, Error as DeError};
 use serde::ser::{SerializeStruct, Serializer};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -19,10 +21,18 @@ pub mod market;
 
 pub type BalancesResponse = WsResponse<Vec<BalancePayload>>;
 pub type OrderResponse = WsResponse<Vec<OrderPayload>>;
-pub type PostTradeSettlemtnResponse = WsResponse<PostTradeSettlementPayload>;
+pub type PostTradeSettlementResponse = WsResponse<PostTradeSettlementPayload>;
 pub type OrderbookResponse = WsResponse<Orderbook>;
 pub type TickerResponse = WsResponse<Ticker>;
 pub type TradeResponse = WsResponse<Trade>;
+
+/// Converts a JSON value from deserialized websocket message into
+/// a typed struct, if possible.
+trait FromJson {
+    fn from_json(value: Value) -> Result<Self, Error>
+    where
+        Self: Sized;
+}
 
 /// Websocket messages fall under one of these categories.
 #[derive(Debug, Deserialize, PartialEq, Serialize)]
@@ -46,6 +56,56 @@ pub struct WsResponse<T> {
     pub timestamp: usize,
 }
 
+impl<T> FromJson for WsResponse<T>
+where
+    T: DeserializeOwned,
+{
+    fn from_json(value: Value) -> Result<Self, Error> {
+        let recipient = match value.get("recipient").and_then(Value::as_str) {
+            Some(recipient) => recipient,
+            None => {
+                return Err(Error::custom(
+                    "could not find 'recipient' key in message".to_string(),
+                ))
+            }
+        };
+
+        let payload: T = match value.get("payload") {
+            Some(payload) => serde_json::from_value(payload.clone()).unwrap(),
+            None => {
+                return Err(Error::custom(
+                    "could not find 'payload' key in message".to_string(),
+                ))
+            }
+        };
+
+        let sequence = match value.get("sequence").and_then(Value::as_u64) {
+            Some(sequence) => sequence as usize,
+            None => {
+                return Err(Error::custom(
+                    "could not find 'sequence' key in message".to_string(),
+                ))
+            }
+        };
+
+        let timestamp = match value.get("timestamp").and_then(Value::as_u64) {
+            Some(timestamp) => timestamp as usize,
+            None => {
+                return Err(Error::custom(
+                    "could not 'timestamp' key in message".to_string(),
+                ))
+            }
+        };
+
+        Ok(WsResponse {
+            recipient: recipient.to_string(),
+            payload,
+            sequence,
+            timestamp,
+        })
+    }
+}
+
 /// Response to a system-related websocket message.
 #[derive(Debug, Deserialize)]
 pub struct WsSystemResponse<T> {
@@ -54,6 +114,56 @@ pub struct WsSystemResponse<T> {
     pub payload: T,
     pub sequence: usize,
     pub timestamp: usize,
+}
+
+impl<T> FromJson for WsSystemResponse<T>
+where
+    T: DeserializeOwned,
+{
+    fn from_json(value: Value) -> Result<Self, Error> {
+        let message_type = match value.get("type").and_then(Value::as_str) {
+            Some(message_type) => message_type,
+            None => {
+                return Err(Error::custom(
+                    "could not find 'type' key in message".to_string(),
+                ))
+            }
+        };
+
+        let payload: T = match value.get("payload") {
+            Some(payload) => serde_json::from_value(payload.clone()).unwrap(),
+            None => {
+                return Err(Error::custom(
+                    "could not find 'payload' key in message".to_string(),
+                ))
+            }
+        };
+
+        let sequence = match value.get("sequence").and_then(Value::as_u64) {
+            Some(sequence) => sequence as usize,
+            None => {
+                return Err(Error::custom(
+                    "could not find 'sequence' key in message".to_string(),
+                ))
+            }
+        };
+
+        let timestamp = match value.get("timestamp").and_then(Value::as_u64) {
+            Some(timestamp) => timestamp as usize,
+            None => {
+                return Err(Error::custom(
+                    "could not 'timestamp' key in message".to_string(),
+                ))
+            }
+        };
+
+        Ok(WsSystemResponse {
+            message_type: message_type.to_string(),
+            payload,
+            sequence,
+            timestamp,
+        })
+    }
 }
 
 ///
@@ -206,14 +316,15 @@ impl From<SubscribeAction> for String {
 
 #[cfg(test)]
 mod tests {
+    use serde_json::{json, Value};
     use tokio_tungstenite::tungstenite::Message;
 
     use crate::{
         util::fixtures,
         websocket::{
             message::{
-                BalancesResponse, Feed, OrderResponse, OrderbookResponse, TickerResponse,
-                TradeResponse,
+                BalancesResponse, Feed, FromJson, OrderResponse, OrderbookResponse, TickerResponse,
+                TradeResponse, WsResponse, WsSystemResponse,
             },
             Client,
         },
@@ -384,5 +495,43 @@ mod tests {
 
         let msg = serde_json::to_string(&balance_subscription).unwrap();
         assert!(msg == "{\"type\":\"subscribe\",\"feeds\":[\"trades.sfox.btcusd\",\"trades.sfox.ethusd\"]}");
+    }
+
+    #[tokio::test]
+    async fn test_deserialize_system_response() {
+        let system_response_payload = r#"
+    {
+        "type": "system_type",
+        "payload": { "some_field": "some_value" },
+        "sequence": 123,
+        "timestamp": 456
+    }
+    "#;
+
+        let _system_response: WsSystemResponse<Value> =
+            WsSystemResponse::from_json(serde_json::from_str(system_response_payload).unwrap())
+                .unwrap();
+    }
+
+    #[test]
+    fn test_deserialize_ws_response() {
+        let ws_response_payload = json!({
+            "recipient": "private.user.balances",
+            "payload": { "some_field": "some_value" },
+            "sequence": 123,
+            "timestamp": 456
+        });
+
+        let ws_response: Result<WsResponse<Value>, _> = WsResponse::from_json(ws_response_payload);
+
+        assert!(ws_response.is_ok());
+        let ws_response = ws_response.unwrap();
+
+        assert_eq!(ws_response.recipient, "private.user.balances");
+        assert_eq!(ws_response.sequence, 123);
+        assert_eq!(ws_response.timestamp, 456);
+
+        let payload = ws_response.payload.as_object().unwrap();
+        assert_eq!(payload.get("some_field").unwrap(), "some_value");
     }
 }
