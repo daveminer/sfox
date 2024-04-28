@@ -26,7 +26,7 @@ _Note: The server URLs `SFOX_HTTP_SERVER_URL` and `SFOX_WS_SERVER_URL` are also 
 
 Add the following line under ```[dependencies]``` in your project's `Cargo.toml`:
 ```
-sfox = { git = "https://github.com/daveminer/sfox.git", version = "0.1.0" }
+sfox = "0.1.5"
 ```
 
 ## Usage

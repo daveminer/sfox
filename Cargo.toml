@@ -5,7 +5,7 @@ keywords = ["crypto", "finance", "http", "trading", "websocket"]
 license = "MIT"
 name = "sfox"
 repository = "https://github.com/daveminer/sfox"
-version = "0.1.4"
+version = "0.1.5"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
