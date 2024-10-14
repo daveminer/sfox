@@ -55,7 +55,7 @@ impl Client {
     pub fn loan_positions(
         self,
         status: Option<String>,
-    ) -> Pin<Box<dyn Future<Output = Result<LoanPositionResponse, HttpError>>>> {
+    ) -> Pin<Box<dyn Future<Output = Result<LoanPositionResponse, HttpError>> + Send>> {
         let resource = POSITIONS_RESOURCE;
         let query = match status {
             Some(s) => {
