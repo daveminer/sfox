@@ -28,6 +28,7 @@ pub type TradeResponse = WsResponse<Trade>;
 
 /// Converts a JSON value from deserialized websocket message into
 /// a typed struct, if possible.
+#[allow(dead_code)]
 trait FromJson {
     fn from_json(value: Value) -> Result<Self, Error>
     where

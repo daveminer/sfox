@@ -31,7 +31,7 @@ impl Client {
         quantity: Option<f64>,
         amount: Option<f64>,
         client_quote_id: Option<&str>,
-    ) -> Pin<Box<dyn Future<Output = Result<Quote, HttpError>>>> {
+    ) -> Pin<Box<dyn Future<Output = Result<Quote, HttpError>> + Send>> {
         let mut params = HashMap::new();
         params.insert("pair".into(), pair.to_string());
         params.insert("side".into(), side.to_string());

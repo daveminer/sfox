@@ -35,7 +35,7 @@ pub enum HttpError {
 
 /// Offers an asynchronous API that models the HTTP resources of the SFox API. Server and authentication are
 /// managed internally.
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct Client {
     #[serde(skip)]
     pub auth_token: String,
